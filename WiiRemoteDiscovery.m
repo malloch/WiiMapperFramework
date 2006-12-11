@@ -127,6 +127,7 @@
 		
 		if (ret == kIOReturnSuccess) {
 			[_delegate WiiRemoteDiscovered: wii];
+			NSLog(@"at checkDevice: %d", [wii retainCount] );
 		} else {
 			[wii release];
 			// initWithDevice generated error message

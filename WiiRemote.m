@@ -41,7 +41,11 @@ typedef unsigned char darr[];
 }
 
 - (void)dealloc{
-	[self close];
+	NSLog(@"dealloc");
+	[self closeConnection];
+
+	NSLog(@"closed in dealloc");
+
 	[super dealloc];
 }
 
@@ -111,6 +115,7 @@ typedef unsigned char darr[];
 			NSLog(@"could not open L2CAP channel ichan");
 			ichan = nil;
 			[cchan closeChannel];
+			[cchan release];
 			[wiiDevice closeConnection];
 			
 			return ret;			
@@ -134,16 +139,15 @@ typedef unsigned char darr[];
 		ret = [self setLEDEnabled1:NO enabled2:NO enabled3:NO enabled4:NO];
 	
 	if (kIOReturnSuccess != ret)
-		[self close];
+		[self closeConnection];
 	
-	[wiiDevice retain];
+	statusTimer = [[NSTimer scheduledTimerWithTimeInterval:15 target:self selector:@selector(getCurrentStatus:) userInfo:nil repeats:YES] retain];
 	return ret;
 }
 
 - (void)disconnected: (IOBluetoothUserNotification*)note fromDevice: (IOBluetoothDevice*)device {
 	NSLog(@"disconnected.");
-	[self close];
-	
+	[self closeConnection];
 	if (nil != _delegate)
 		[_delegate wiiRemoteDisconnected];
 	
@@ -181,15 +185,12 @@ typedef unsigned char darr[];
 	return ret;
 }
 
+
 - (unsigned char)batteryLevel{
-	unsigned char cmd[] = {0x15};
-	IOReturn ret = [self sendCommand:cmd length:1];
-	if (ret == kIOReturnSuccess){
-		usleep(10000);
-	}
 	
 	return batteryLevel;
 }
+
 
 - (IOReturn)setMotionSensorEnabled:(BOOL)enabled{
 	// these variables indicate a desire, and should be updated regardless of the sucess of sending the command
@@ -295,18 +296,24 @@ typedef unsigned char darr[];
 	return [self sendCommand:cmd length:22];
 }
 
-- (IOReturn)close{
-	IOReturn ret;
+- (IOReturn)closeConnection{
+	IOReturn ret = 0;
 	int trycount = 0;
 	
-	if (nil != disconnectNotification)
+	
+	
+	if (disconnectNotification!=nil){
 		[disconnectNotification unregister];
+		disconnectNotification = nil;
+	}
+	
 	
 	if (cchan){
 		if ([wiiDevice isConnected]) do {
 			ret = [cchan closeChannel];
 			trycount++;
 		}while(ret != kIOReturnSuccess && trycount < 10);
+		NSLog(@"cchan count: %d", [cchan retainCount] );
 		[cchan release];
 	}
 
@@ -318,6 +325,7 @@ typedef unsigned char darr[];
 			ret = [ichan closeChannel];
 			trycount++;
 		}while(ret != kIOReturnSuccess && trycount < 10);
+		NSLog(@"ichan count: %d", [ichan retainCount] );
 		[ichan release];
 	}
 
@@ -328,9 +336,8 @@ typedef unsigned char darr[];
 		if ([wiiDevice isConnected]) do{
 			ret = [wiiDevice closeConnection];
 			trycount++;
-		}while(ret != kIOReturnSuccess && trycount < 10 && [wiiDevice isConnected]);
-		[wiiDevice release];
-		
+		}while(ret != kIOReturnSuccess && trycount < 10);
+		NSLog(@"closed");
 	}
 	
 	ichan = cchan = nil;
@@ -338,6 +345,14 @@ typedef unsigned char darr[];
 	
 	// no longer a delegate
 	//[self release];
+	if (statusTimer){
+		[statusTimer invalidate];
+		[statusTimer release];
+		statusTimer = nil;
+		NSLog(@"release timer");
+
+	}
+
 	
 	return ret;
 }
@@ -457,6 +472,10 @@ typedef unsigned char darr[];
 	//[_delegate dataChanged:buttonData accX:irData[0].x/4 accY:irData[0].y/3 accZ:irData[0].s*16];
 }
 
-
+- (void)getCurrentStatus:(NSTimer*)timer{
+	NSLog(@"timer");
+	unsigned char cmd[] = {0x15};
+	[self sendCommand:cmd length:1];
+}
 
 @end

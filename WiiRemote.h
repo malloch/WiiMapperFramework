@@ -53,7 +53,7 @@ enum {
 	unsigned char batteryLevel;
 	
 	BOOL isMotionSensorEnabled, isIRSensorEnabled, isVibrationEnabled, isExpansionPortUsed;
-	
+	NSTimer* statusTimer;
 	IOBluetoothUserNotification *disconnectNotification;
 }
 
@@ -61,7 +61,7 @@ enum {
 - (void)setDelegate:(id)delegate;
 - (unsigned char)batteryLevel;
 - (BOOL)available;
-- (IOReturn)close;
+- (IOReturn)closeConnection;
 - (IOReturn)setIRSensorEnabled:(BOOL)enabled;
 - (IOReturn)setForceFeedbackEnabled:(BOOL)enabled;
 - (IOReturn)setMotionSensorEnabled:(BOOL)enabled;
