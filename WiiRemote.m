@@ -16,13 +16,14 @@ typedef unsigned char darr[];
 - (id) init{
 	
 	// unfortunately this shouldn't be required, but it keeps it from crashing.
-	[self retain];
+	//[self retain];
 	
 	accX = 0x10;
 	accY = 0x10;
 	accZ = 0x10;
 	buttonData = 0;
 	leftPoint = -1;
+	batteryLevel = 0;
 
 	
 	_delegate = nil;
@@ -34,6 +35,7 @@ typedef unsigned char darr[];
 	isIRSensorEnabled = NO;
 	isMotionSensorEnabled = NO;
 	isVibrationEnabled = NO;
+	isExpansionPortUsed = NO;
 	
 	return self;
 }
@@ -75,7 +77,7 @@ typedef unsigned char darr[];
 		usleep(10000); //  wait 10ms
 	}
 	
-	[self retain];
+	//[self retain];
 	
 	disconnectNotification = [wiiDevice registerForDisconnectNotification:self selector:@selector(disconnected:fromDevice:)];
 	
@@ -134,6 +136,7 @@ typedef unsigned char darr[];
 	if (kIOReturnSuccess != ret)
 		[self close];
 	
+	[wiiDevice retain];
 	return ret;
 }
 
@@ -176,6 +179,16 @@ typedef unsigned char darr[];
 	
 	
 	return ret;
+}
+
+- (unsigned char)batteryLevel{
+	unsigned char cmd[] = {0x15};
+	IOReturn ret = [self sendCommand:cmd length:1];
+	if (ret == kIOReturnSuccess){
+		usleep(10000);
+	}
+	
+	return batteryLevel;
 }
 
 - (IOReturn)setMotionSensorEnabled:(BOOL)enabled{
@@ -316,7 +329,7 @@ typedef unsigned char darr[];
 			ret = [wiiDevice closeConnection];
 			trycount++;
 		}while(ret != kIOReturnSuccess && trycount < 10 && [wiiDevice isConnected]);
-	//	[wiiDevice release]; // don't do this - stuff crashes if you do.
+		[wiiDevice release];
 		
 	}
 	
@@ -324,7 +337,7 @@ typedef unsigned char darr[];
 	wiiDevice = nil;
 	
 	// no longer a delegate
-	[self release];
+	//[self release];
 	
 	return ret;
 }
@@ -344,6 +357,17 @@ typedef unsigned char darr[];
 		}
 		printf("\n");
 	}*/
+	
+	//controller status (expansion port and battery level data)
+	if (dp[1] == 0x20 && dataLength >= 8){
+		batteryLevel = dp[7];
+		NSLog(@"battery: %d", batteryLevel);
+		if ((dp[4] & 0x20)){
+			isExpansionPortUsed = YES;
+		}else{
+			isExpansionPortUsed = NO;
+		}
+	}
 	
 	if ((dp[1]&0xF0) == 0x30) {
 		buttonData = ((short)dp[2] << 8) + dp[3];
