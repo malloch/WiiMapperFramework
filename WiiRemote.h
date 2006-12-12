@@ -50,7 +50,8 @@ enum {
 	int leftPoint; // is point 0 or 1 on the left. -1 when not tracking.
 	
 	IRData	irData[4];
-	unsigned char batteryLevel;
+	double batteryLevel;
+	double warningBatteryLevel;
 	
 	BOOL isMotionSensorEnabled, isIRSensorEnabled, isVibrationEnabled, isExpansionPortUsed;
 	BOOL isLED1Illuminated, isLED2Illuminated, isLED3Illuminated, isLED4Illuminated;
@@ -60,7 +61,7 @@ enum {
 
 - (IOReturn)connectTo:(IOBluetoothDevice*)device;
 - (void)setDelegate:(id)delegate;
-- (unsigned char)batteryLevel;
+- (double)batteryLevel;
 - (BOOL)available;
 - (IOReturn)closeConnection;
 - (IOReturn)setIRSensorEnabled:(BOOL)enabled;

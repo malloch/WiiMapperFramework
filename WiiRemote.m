@@ -24,6 +24,7 @@ typedef unsigned char darr[];
 	buttonData = 0;
 	leftPoint = -1;
 	batteryLevel = 0;
+	warningBatteryLevel = 0.05;
 
 	
 	_delegate = nil;
@@ -142,6 +143,7 @@ typedef unsigned char darr[];
 		[self closeConnection];
 	
 	statusTimer = [[NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(getCurrentStatus:) userInfo:nil repeats:YES] retain];
+	[self getCurrentStatus:nil];
 	return ret;
 }
 
@@ -372,7 +374,12 @@ typedef unsigned char darr[];
 	
 	//controller status (expansion port and battery level data)
 	if (dp[1] == 0x20 && dataLength >= 8){
-		batteryLevel = dp[7];
+		batteryLevel = (double)dp[7] / (double)0xC0;
+		
+		if (batteryLevel < warningBatteryLevel){
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"WiiRemoteBatteryLowNotification" object:self];
+		}
+		
 		if ((dp[4] & 0x02)){
 			isExpansionPortUsed = YES;
 		}else{
