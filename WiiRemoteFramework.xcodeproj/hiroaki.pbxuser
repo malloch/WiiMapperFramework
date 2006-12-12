@@ -95,6 +95,7 @@
 			PBXWorkspaceStateSaveDate = 187606432;
 		};
 		perUserProjectItems = {
+			532BA5460B2EA6ED00C2222A /* PBXTextBookmark */ = 532BA5460B2EA6ED00C2222A /* PBXTextBookmark */;
 			5351D5400B2D671C00F86B96 = 5351D5400B2D671C00F86B96 /* PBXTextBookmark */;
 			5351D5D30B2D91F900F86B96 = 5351D5D30B2D91F900F86B96 /* PBXTextBookmark */;
 			5351D5F30B2D92AE00F86B96 = 5351D5F30B2D92AE00F86B96 /* PBXTextBookmark */;
@@ -131,6 +132,16 @@
 	531893080B2C37B700277BC3 /* Code sense */ = {
 		isa = PBXCodeSenseManager;
 		indexTemplatePath = "";
+	};
+	532BA5460B2EA6ED00C2222A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50D0B2D34DA00F86B96 /* WiiRemoteDiscovery.h */;
+		name = "WiiRemoteDiscovery.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 0;
+		vrLoc = 0;
 	};
 	5351D4BF0B2D1C2600F86B96 /* XCBreakpointsBucket */ = {
 		isa = XCBreakpointsBucket;

@@ -224,6 +224,10 @@ typedef unsigned char darr[];
 	if (enabled3)	cmd[1] |= 0x40;
 	if (enabled4)	cmd[1] |= 0x80;
 	
+	isLED1Illuminated = enabled1;
+	isLED2Illuminated = enabled2;
+	isLED3Illuminated = enabled3;
+	isLED4Illuminated = enabled4;
 	
 	return 	[self sendCommand:cmd length:2];
 }
@@ -364,23 +368,44 @@ typedef unsigned char darr[];
 		return;
 	unsigned char* dp = (unsigned char*)dataPointer;
 	
-/*	if ((dp[1]&0xF0) != 0x30) {
-		printf ("recv%3d:", dataLength);
-		int i;
-		for(i=0 ; i<dataLength ; i++) {
-			printf(" %02X", dp[i]);
-		}
-		printf("\n");
-	}*/
+	
 	
 	//controller status (expansion port and battery level data)
 	if (dp[1] == 0x20 && dataLength >= 8){
 		batteryLevel = dp[7];
-		if ((dp[4] & 0x20)){
+		if ((dp[4] & 0x02)){
 			isExpansionPortUsed = YES;
 		}else{
 			isExpansionPortUsed = NO;
 		}
+		
+		if ((dp[4] & 0x10)){
+			isLED1Illuminated = YES;
+		}else{
+			isLED1Illuminated = NO;
+		}
+		
+		if ((dp[4] & 0x20)){
+			isLED2Illuminated = YES;
+		}else{
+			isLED2Illuminated = NO;
+		}
+		
+		if ((dp[4] & 0x40)){
+			isLED3Illuminated = YES;
+		}else{
+			isLED3Illuminated = NO;
+		}
+		
+		if ((dp[4] & 0x80)){
+			isLED4Illuminated = YES;
+		}else{
+			isLED4Illuminated = NO;
+		}
+
+		//have to reset settings (vibration, motion, IR and so on...)
+		[self setIRSensorEnabled:isIRSensorEnabled];
+		
 	}
 	
 	if ((dp[1]&0xF0) == 0x30) {

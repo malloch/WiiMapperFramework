@@ -53,6 +53,7 @@ enum {
 	unsigned char batteryLevel;
 	
 	BOOL isMotionSensorEnabled, isIRSensorEnabled, isVibrationEnabled, isExpansionPortUsed;
+	BOOL isLED1Illuminated, isLED2Illuminated, isLED3Illuminated, isLED4Illuminated;
 	NSTimer* statusTimer;
 	IOBluetoothUserNotification *disconnectNotification;
 }
