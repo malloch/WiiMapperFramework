@@ -141,7 +141,7 @@ typedef unsigned char darr[];
 	if (kIOReturnSuccess != ret)
 		[self closeConnection];
 	
-	statusTimer = [[NSTimer scheduledTimerWithTimeInterval:15 target:self selector:@selector(getCurrentStatus:) userInfo:nil repeats:YES] retain];
+	statusTimer = [[NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(getCurrentStatus:) userInfo:nil repeats:YES] retain];
 	return ret;
 }
 
@@ -376,7 +376,6 @@ typedef unsigned char darr[];
 	//controller status (expansion port and battery level data)
 	if (dp[1] == 0x20 && dataLength >= 8){
 		batteryLevel = dp[7];
-		NSLog(@"battery: %d", batteryLevel);
 		if ((dp[4] & 0x20)){
 			isExpansionPortUsed = YES;
 		}else{
@@ -473,9 +472,8 @@ typedef unsigned char darr[];
 }
 
 - (void)getCurrentStatus:(NSTimer*)timer{
-	NSLog(@"timer");
-	unsigned char cmd[] = {0x15};
-	[self sendCommand:cmd length:1];
+	unsigned char cmd[] = {0x15, 0x00};
+	[self sendCommand:cmd length:2];
 }
 
 @end
