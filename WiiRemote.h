@@ -59,6 +59,7 @@ enum {
 	IOBluetoothUserNotification *disconnectNotification;
 }
 
+- (NSString*) address;
 - (IOReturn)connectTo:(IOBluetoothDevice*)device;
 - (void)setDelegate:(id)delegate;
 - (double)batteryLevel;

@@ -99,6 +99,11 @@
 			531449BA0B3043ED00757188 = 531449BA0B3043ED00757188 /* PBXTextBookmark */;
 			53144A1E0B30487A00757188 /* PBXTextBookmark */ = 53144A1E0B30487A00757188 /* PBXTextBookmark */;
 			53144A850B30491A00757188 /* PBXTextBookmark */ = 53144A850B30491A00757188 /* PBXTextBookmark */;
+			53144A9F0B30608F00757188 /* PBXTextBookmark */ = 53144A9F0B30608F00757188 /* PBXTextBookmark */;
+			53144AA00B30608F00757188 /* PBXTextBookmark */ = 53144AA00B30608F00757188 /* PBXTextBookmark */;
+			53144AA10B30608F00757188 /* PBXTextBookmark */ = 53144AA10B30608F00757188 /* PBXTextBookmark */;
+			53144AA20B30608F00757188 /* PBXTextBookmark */ = 53144AA20B30608F00757188 /* PBXTextBookmark */;
+			53144AA30B30608F00757188 /* PBXTextBookmark */ = 53144AA30B30608F00757188 /* PBXTextBookmark */;
 			5351D5400B2D671C00F86B96 = 5351D5400B2D671C00F86B96 /* PBXTextBookmark */;
 			5351D5F30B2D92AE00F86B96 = 5351D5F30B2D92AE00F86B96 /* PBXTextBookmark */;
 			5351D5F40B2D92AE00F86B96 = 5351D5F40B2D92AE00F86B96 /* PBXTextBookmark */;
@@ -118,7 +123,7 @@
 		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
 		name = "- (IOReturn)setLEDEnabled1:(BOOL)enabled1 enabled2:(BOOL)enabled2 enabled3:(BOOL)enabled3 enabled4:(BOOL)enabled4";
 		rLen = 113;
-		rLoc = 4657;
+		rLoc = 4719;
 		rType = 0;
 		vrLen = 1826;
 		vrLoc = 3836;
@@ -128,7 +133,7 @@
 		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
 		name = "- (IOReturn)setLEDEnabled1:(BOOL)enabled1 enabled2:(BOOL)enabled2 enabled3:(BOOL)enabled3 enabled4:(BOOL)enabled4";
 		rLen = 113;
-		rLoc = 4657;
+		rLoc = 4719;
 		rType = 0;
 		vrLen = 1826;
 		vrLoc = 3836;
@@ -138,7 +143,7 @@
 		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
 		name = "- (IOReturn)setLEDEnabled1:(BOOL)enabled1 enabled2:(BOOL)enabled2 enabled3:(BOOL)enabled3 enabled4:(BOOL)enabled4";
 		rLen = 113;
-		rLoc = 4657;
+		rLoc = 4719;
 		rType = 0;
 		vrLen = 1826;
 		vrLoc = 3836;
@@ -158,6 +163,56 @@
 			sepNavVisRect = "{{0, 0}, {1019, 923}}";
 			sepNavWindowFrame = "{{130, 31}, {1058, 1037}}";
 		};
+	};
+	53144A9F0B30608F00757188 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50B0B2D34DA00F86B96 /* WiiRemote.h */;
+		name = "WiiRemote.h: address";
+		rLen = 0;
+		rLoc = 1395;
+		rType = 0;
+		vrLen = 1924;
+		vrLoc = 311;
+	};
+	53144AA00B30608F00757188 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
+		name = "WiiRemote.m: 216";
+		rLen = 0;
+		rLoc = 4666;
+		rType = 0;
+		vrLen = 1826;
+		vrLoc = 3836;
+	};
+	53144AA10B30608F00757188 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
+		name = "WiiRemote.m: 216";
+		rLen = 0;
+		rLoc = 4666;
+		rType = 0;
+		vrLen = 1826;
+		vrLoc = 3836;
+	};
+	53144AA20B30608F00757188 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50B0B2D34DA00F86B96 /* WiiRemote.h */;
+		name = "WiiRemote.h: address";
+		rLen = 0;
+		rLoc = 1395;
+		rType = 0;
+		vrLen = 1924;
+		vrLoc = 311;
+	};
+	53144AA30B30608F00757188 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
+		name = "WiiRemote.m: 197";
+		rLen = 0;
+		rLoc = 3924;
+		rType = 0;
+		vrLen = 1394;
+		vrLoc = 3324;
 	};
 	531893070B2C37B700277BC3 /* Source Control */ = {
 		isa = PBXSourceControlManager;
@@ -180,17 +235,17 @@
 	};
 	5351D50B0B2D34DA00F86B96 /* WiiRemote.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {988, 1176}}";
-			sepNavSelRange = "{1256, 0}";
-			sepNavVisRect = "{{0, 266}, {988, 910}}";
+			sepNavIntBoundsRect = "{{0, 0}, {988, 1190}}";
+			sepNavSelRange = "{1395, 0}";
+			sepNavVisRect = "{{0, 245}, {988, 910}}";
 			sepNavWindowFrame = "{{333, 0}, {1027, 1024}}";
 		};
 	};
 	5351D50C0B2D34DA00F86B96 /* WiiRemote.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {988, 7224}}";
-			sepNavSelRange = "{4657, 113}";
-			sepNavVisRect = "{{0, 2632}, {988, 910}}";
+			sepNavIntBoundsRect = "{{0, 0}, {988, 7266}}";
+			sepNavSelRange = "{3924, 0}";
+			sepNavVisRect = "{{0, 2193}, {988, 910}}";
 			sepNavWindowFrame = "{{426, 91}, {1027, 1024}}";
 		};
 	};

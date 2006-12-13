@@ -193,6 +193,9 @@ typedef unsigned char darr[];
 	return batteryLevel;
 }
 
+- (NSString*)address{
+	return [wiiDevice getAddressString];
+}
 
 - (IOReturn)setMotionSensorEnabled:(BOOL)enabled{
 	// these variables indicate a desire, and should be updated regardless of the sucess of sending the command
