@@ -151,6 +151,14 @@
 			sepNavWindowFrame = "{{107, 52}, {1058, 1037}}";
 		};
 	};
+	53144A8B0B30495700757188 /* HISTORY.txt */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1019, 923}}";
+			sepNavSelRange = "{110, 0}";
+			sepNavVisRect = "{{0, 0}, {1019, 923}}";
+			sepNavWindowFrame = "{{130, 31}, {1058, 1037}}";
+		};
+	};
 	531893070B2C37B700277BC3 /* Source Control */ = {
 		isa = PBXSourceControlManager;
 		fallbackIsa = XCSourceControlManager;
