@@ -134,10 +134,10 @@
 	};
 	5351D50C0B2D34DA00F86B96 /* WiiRemote.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {988, 7182}}";
-			sepNavSelRange = "{8725, 0}";
-			sepNavVisRect = "{{0, 6272}, {988, 910}}";
-			sepNavWindowFrame = "{{346, 50}, {1027, 1024}}";
+			sepNavIntBoundsRect = "{{0, 0}, {988, 7224}}";
+			sepNavSelRange = "{6730, 0}";
+			sepNavVisRect = "{{0, 4908}, {988, 910}}";
+			sepNavWindowFrame = "{{628, 56}, {1027, 1024}}";
 		};
 	};
 	5351D50D0B2D34DA00F86B96 /* WiiRemoteDiscovery.h */ = {
