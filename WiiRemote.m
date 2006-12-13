@@ -188,7 +188,7 @@ typedef unsigned char darr[];
 }
 
 
-- (unsigned char)batteryLevel{
+- (double)batteryLevel{
 	
 	return batteryLevel;
 }
@@ -319,7 +319,7 @@ typedef unsigned char darr[];
 			ret = [cchan closeChannel];
 			trycount++;
 		}while(ret != kIOReturnSuccess && trycount < 10);
-		NSLog(@"cchan count: %d", [cchan retainCount] );
+		//NSLog(@"cchan count: %d", [cchan retainCount] );
 		[cchan release];
 	}
 
@@ -331,7 +331,7 @@ typedef unsigned char darr[];
 			ret = [ichan closeChannel];
 			trycount++;
 		}while(ret != kIOReturnSuccess && trycount < 10);
-		NSLog(@"ichan count: %d", [ichan retainCount] );
+		//NSLog(@"ichan count: %d", [ichan retainCount] );
 		[ichan release];
 	}
 
@@ -343,7 +343,7 @@ typedef unsigned char darr[];
 			ret = [wiiDevice closeConnection];
 			trycount++;
 		}while(ret != kIOReturnSuccess && trycount < 10);
-		NSLog(@"closed");
+		//NSLog(@"closed");
 	}
 	
 	ichan = cchan = nil;
@@ -355,7 +355,7 @@ typedef unsigned char darr[];
 		[statusTimer invalidate];
 		[statusTimer release];
 		statusTimer = nil;
-		NSLog(@"release timer");
+		//NSLog(@"release timer");
 
 	}
 
@@ -374,7 +374,8 @@ typedef unsigned char darr[];
 	
 	//controller status (expansion port and battery level data)
 	if (dp[1] == 0x20 && dataLength >= 8){
-		batteryLevel = (double)dp[7] / (double)0xC0;
+		batteryLevel = (double)dp[7];
+		batteryLevel /= (double)0xC0;
 		
 		if (batteryLevel < warningBatteryLevel){
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"WiiRemoteBatteryLowNotification" object:self];
