@@ -276,6 +276,9 @@ typedef unsigned char darr[];
 		// probably should do some writes to power down the camera, save battery
 		// but don't know how yet.
 
+		//bug fix #1614587 
+		[self setMotionSensorEnabled:isMotionSensorEnabled];
+		[self setForceFeedbackEnabled:isVibrationEnabled];
 	}
 	
 	return kIOReturnSuccess;
