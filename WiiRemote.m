@@ -11,12 +11,15 @@
 // this type is used a lot (data array):
 typedef unsigned char darr[];
 
+
+
+
+
+
 @implementation WiiRemote
 
 - (id) init{
-	
-	// unfortunately this shouldn't be required, but it keeps it from crashing.
-	//[self retain];
+
 	
 	accX = 0x10;
 	accY = 0x10;
@@ -38,14 +41,16 @@ typedef unsigned char darr[];
 	isVibrationEnabled = NO;
 	isExpansionPortUsed = NO;
 	
+	//buttonAIsEnabled = buttonBIsEnabled = buttonOneIsEnabled = buttonTwoIsEnabled = buttonMinusIsEnabled = buttonHomeIsEnabled = buttonPlusIsEnabled = buttonLeftIsEnabled = buttonRightIsEnabled = buttonUpIsEnabled = buttonDownIsEnabled = NO;
+	
 	return self;
 }
 
 - (void)dealloc{
-	NSLog(@"dealloc");
+	//NSLog(@"dealloc");
 	[self closeConnection];
 
-	NSLog(@"closed in dealloc");
+	//NSLog(@"closed in dealloc");
 
 	[super dealloc];
 }
@@ -144,14 +149,18 @@ typedef unsigned char darr[];
 	
 	statusTimer = [[NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(getCurrentStatus:) userInfo:nil repeats:YES] retain];
 	[self getCurrentStatus:nil];
+	[self readData:0x16 length:7];
 	return ret;
 }
 
 - (void)disconnected: (IOBluetoothUserNotification*)note fromDevice: (IOBluetoothDevice*)device {
-	NSLog(@"disconnected.");
-	[self closeConnection];
-	if (nil != _delegate)
-		[_delegate wiiRemoteDisconnected];
+	//NSLog(@"disconnected.");
+	
+	if ([[device getAddressString] isEqualToString:[self address]]){
+		[self closeConnection];
+		if (nil != _delegate)
+			[_delegate wiiRemoteDisconnected:device];
+	}
 	
 }
 
@@ -166,13 +175,13 @@ typedef unsigned char darr[];
 	else				length++;
 	
 	int i;
-	
-/*	printf ("send%3d:", length);
+	/**
+	printf ("send%3d:", length);
 	for(i=0 ; i<length ; i++) {
 		printf(" %02X", buf[i]);
 	}
-	printf("\n");*/
-	
+	printf("\n");
+	**/
 	IOReturn ret;
 	
 	for (i = 0; i < 10; i++){
@@ -201,7 +210,7 @@ typedef unsigned char darr[];
 	// these variables indicate a desire, and should be updated regardless of the sucess of sending the command
 	isMotionSensorEnabled = enabled;
 	
-	unsigned char cmd[] = {0x12, 0x00, 0x30};
+	unsigned char cmd[] = {0x12, 0x02, 0x30};
 	if (isVibrationEnabled)	cmd[1] |= 0x01;
 	if (isMotionSensorEnabled)	cmd[2] |= 0x01;
 	if (isIRSensorEnabled)	cmd[2] |= 0x02;
@@ -235,6 +244,27 @@ typedef unsigned char darr[];
 	isLED4Illuminated = enabled4;
 	
 	return 	[self sendCommand:cmd length:2];
+}
+
+-(IOReturn)setNunchukEnabled:(BOOL)enabled{
+	
+	[self setIRSensorEnabled:isIRSensorEnabled];
+	
+	//hmm...
+	if (!enabled || !isExpansionPortUsed)
+		return kIOReturnSuccess;
+	
+	//unsigned char cmd[] = {0x16, 0x04, 0xA4, 0x00, 0x40, 0x41};
+	unsigned char cmd[] = {0x00};
+	IOReturn ret = [self writeData:(darr){0x00} at:(unsigned long)0x04A40040 length:1];
+	
+	//IOReturn ret = [self sendCommand:cmd length:6];
+	
+	if (ret == kIOReturnSuccess){
+		//get calbdata
+		[self readData:0x04A40020 length: 16];
+	}
+	return ret;
 }
 
 
@@ -290,14 +320,21 @@ typedef unsigned char darr[];
 
 - (IOReturn)writeData:(const unsigned char*)data at:(unsigned long)address length:(size_t)length{
 	unsigned char cmd[22];
+	//unsigned long addr = CFSwapInt32HostToBig(address);
+	unsigned long addr = address;
+
 	int i;
-	for(i=0 ; i<length ; i++) cmd[i+6] = data[i];
-	for(;i<16 ; i++) cmd[i+6]= 0;
+	for(i=0 ; i<length ; i++) {
+		cmd[i+6] = data[i];
+	}
+	for(; i<16; i++) {
+		cmd[i+6]= 0;
+	}
 	cmd[0] = 0x16;
-	cmd[1] = (address>>24)&0xFF;
-	cmd[2] = (address>>16)&0xFF;
-	cmd[3] = (address>> 8)&0xFF;
-	cmd[4] = (address>> 0)&0xFF;
+	cmd[1] = (addr>>24)&0xFF;
+	cmd[2] = (addr>>16)&0xFF;
+	cmd[3] = (addr>> 8)&0xFF;
+	cmd[4] = (addr>> 0)&0xFF;
 	cmd[5] = length;
 	
 	// and of course the vibration flag, as usual
@@ -307,6 +344,32 @@ typedef unsigned char darr[];
 	
 	return [self sendCommand:cmd length:22];
 }
+
+
+- (IOReturn)readData:(unsigned long)address length:(unsigned short)length{
+	
+	unsigned char cmd[7];
+	
+	//unsigned long addr = CFSwapInt32HostToBig(address);
+	unsigned long addr = address;
+	unsigned short len = CFSwapInt16HostToBig(length);
+	
+	cmd[0] = 0x17;
+	cmd[1] = (addr>>24)&0xFF;
+	cmd[2] = (addr>>16)&0xFF;
+	cmd[3] = (addr>> 8)&0xFF;
+	cmd[4] = (addr>> 0)&0xFF;
+	
+	cmd[5] = (len >> 8)&0xFF;
+	cmd[6] = (len >> 0)&0xFF;
+	
+	
+	if (isVibrationEnabled)	cmd[1] |= 0x01;
+	
+	
+	return [self sendCommand:cmd length:7];
+}
+
 
 - (IOReturn)closeConnection{
 	IOReturn ret = 0;
@@ -376,6 +439,45 @@ typedef unsigned char darr[];
 		return;
 	unsigned char* dp = (unsigned char*)dataPointer;
 	
+	/**
+	if (dp[1] == 0x22){
+		int i;
+		
+		printf ("ack%3d:", dataLength);
+		for(i=0 ; i<dataLength ; i++) {
+			printf(" %02X", dp[i]);
+		}
+		printf("\n");
+	}**/
+	
+	//reading ram data
+	if (dp[1] == 0x21){
+				
+		//wii calibration data
+		if (dataLength >= 14 && dp[5] == 0x00 && dp[6] == 0x16){
+			//NSLog(@"calibData");
+
+			wiiCalibData.accX_zero = dp[7];
+			wiiCalibData.accY_zero = dp[8];
+			wiiCalibData.accZ_zero = dp[9];
+			
+			wiiCalibData.accX_1g = dp[11];
+			wiiCalibData.accY_1g = dp[12];
+			wiiCalibData.accZ_1g = dp[13];
+		}
+		
+		//Nunchuk calibration data
+		if (dataLength >= 14 && dp[5] == 0x04 && dp[6] == 0xA4){
+			//NSLog(@"calibData");
+			nunchukCalibData.accX_zero = dp[7];
+			nunchukCalibData.accY_zero = dp[8];
+			nunchukCalibData.accZ_zero = dp[9];
+			
+			nunchukCalibData.accX_1g = dp[11];
+			nunchukCalibData.accY_1g = dp[12];
+			nunchukCalibData.accZ_1g = dp[13];
+		}
+	}
 	
 	
 	//controller status (expansion port and battery level data)
@@ -388,9 +490,19 @@ typedef unsigned char darr[];
 		}
 		
 		if ((dp[4] & 0x02)){
-			isExpansionPortUsed = YES;
+
+			if (!isExpansionPortUsed){
+				isExpansionPortUsed = YES;
+
+				[[NSNotificationCenter defaultCenter] postNotificationName:@"WiiRemoteExpansionPortChangedNotification" object:self];
+			}
 		}else{
-			isExpansionPortUsed = NO;
+
+			if (isExpansionPortUsed){
+				isExpansionPortUsed = NO;
+
+				[[NSNotificationCenter defaultCenter] postNotificationName:@"WiiRemoteExpansionPortChangedNotification" object:self];
+			}
 		}
 		
 		if ((dp[4] & 0x10)){
@@ -424,11 +536,34 @@ typedef unsigned char darr[];
 	
 	if ((dp[1]&0xF0) == 0x30) {
 		buttonData = ((short)dp[2] << 8) + dp[3];
+		[self sendWiiRemoteButtonEvent:buttonData];
+		//retrieve nunchuk data
+		if (dp[1] == 0x32 || dp[1] == 0x34 || dp[1] == 0x36 || dp[1] == 0x37 || dp[1] == 0x3D){
+			//NSLog(@"data is coming!!!");
+			/**
+			xStick = (dp[16] ^ 0x17) + 0x17;
+			yStick = (dp[17] ^ 0x17) + 0x17;
+			nAccX = (dp[18] ^ 0x17) + 0x17;
+			nAccY = (dp[19] ^ 0x17) + 0x17;
+			nAccZ = (dp[20] ^ 0x17) + 0x17;
+			nButtonData = (dp[21] ^ 0x17) + 0x17;
+			
+			if (isExpansionPortUsed){
+				NSLog(@"nunchuk buttonData");
+				[self sendWiiNunchukButtonEvent:nButtonData];
+				[_delegate accelerationChanged:WiiNunchukAccelerationSensor accX:nAccX accY:nAccY accZ:nAccZ];
+			}**/
+		}
+		
+		
 		
 		if (dp[1] & 0x01) {
 			accX = dp[4];
 			accY = dp[5];
 			accZ = dp[6];
+			
+			[_delegate accelerationChanged:WiiRemoteAccelerationSensor accX:accX accY:accY accZ:accZ];
+			
 			
 			lowZ = lowZ*.9 + accZ*.1;
 			lowX = lowX*.9 + accX*.1;
@@ -505,14 +640,188 @@ typedef unsigned char darr[];
 		}
 	}
 	
-	if (nil != _delegate)
-		[_delegate dataChanged:buttonData accX:accX accY:accY accZ:accZ mouseX:ox mouseY:oy];
+	
+	[_delegate irPointMovedX:ox Y:oy];
+	//if (nil != _delegate)
+		//[_delegate dataChanged:buttonData accX:accX accY:accY accZ:accZ mouseX:ox mouseY:oy];
 	//[_delegate dataChanged:buttonData accX:irData[0].x/4 accY:irData[0].y/3 accZ:irData[0].s*16];
 }
+
+- (void)sendWiiRemoteButtonEvent:(UInt16)data{
+
+	if (data & kWiiRemoteTwoButton){
+		if (!buttonState[WiiRemoteTwoButton]){
+			buttonState[WiiRemoteTwoButton] = YES;
+			[_delegate buttonChanged:WiiRemoteTwoButton isPressed:buttonState[WiiRemoteTwoButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteTwoButton]){
+			buttonState[WiiRemoteTwoButton] = NO;
+			[_delegate buttonChanged:WiiRemoteTwoButton isPressed:buttonState[WiiRemoteTwoButton]];
+		}
+	}
+
+	if (data & kWiiRemoteOneButton){
+		if (!buttonState[WiiRemoteOneButton]){
+			buttonState[WiiRemoteOneButton] = YES;
+			[_delegate buttonChanged:WiiRemoteOneButton isPressed:buttonState[WiiRemoteOneButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteOneButton]){
+			buttonState[WiiRemoteOneButton] = NO;
+			[_delegate buttonChanged:WiiRemoteOneButton isPressed:buttonState[WiiRemoteOneButton]];
+		}
+	}
+	
+	if (data & kWiiRemoteAButton){
+		if (!buttonState[WiiRemoteAButton]){
+			buttonState[WiiRemoteAButton] = YES;
+			[_delegate buttonChanged:WiiRemoteAButton isPressed:buttonState[WiiRemoteAButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteAButton]){
+			buttonState[WiiRemoteAButton] = NO;
+			[_delegate buttonChanged:WiiRemoteAButton isPressed:buttonState[WiiRemoteAButton]];
+		}
+	}
+	
+	if (data & kWiiRemoteBButton){
+		if (!buttonState[WiiRemoteBButton]){
+			buttonState[WiiRemoteBButton] = YES;
+			[_delegate buttonChanged:WiiRemoteBButton isPressed:buttonState[WiiRemoteBButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteBButton]){
+			buttonState[WiiRemoteBButton] = NO;
+			[_delegate buttonChanged:WiiRemoteBButton isPressed:buttonState[WiiRemoteBButton]];
+		}
+	}
+	
+	if (data & kWiiRemoteMinusButton){
+		if (!buttonState[WiiRemoteMinusButton]){
+			buttonState[WiiRemoteMinusButton] = YES;
+			[_delegate buttonChanged:WiiRemoteMinusButton isPressed:buttonState[WiiRemoteMinusButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteMinusButton]){
+			buttonState[WiiRemoteMinusButton] = NO;
+			[_delegate buttonChanged:WiiRemoteMinusButton isPressed:buttonState[WiiRemoteMinusButton]];
+		}
+	}
+	
+	if (data & kWiiRemoteHomeButton){
+		if (!buttonState[WiiRemoteHomeButton]){
+			buttonState[WiiRemoteHomeButton] = YES;
+			[_delegate buttonChanged:WiiRemoteHomeButton isPressed:buttonState[WiiRemoteHomeButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteHomeButton]){
+			buttonState[WiiRemoteHomeButton] = NO;
+			[_delegate buttonChanged:WiiRemoteHomeButton isPressed:buttonState[WiiRemoteHomeButton]];
+		}
+	}
+	
+	if (data & kWiiRemotePlusButton){
+		if (!buttonState[WiiRemotePlusButton]){
+			buttonState[WiiRemotePlusButton] = YES;
+			[_delegate buttonChanged:WiiRemotePlusButton isPressed:buttonState[WiiRemotePlusButton]];
+		}
+	}else{
+		if (buttonState[WiiRemotePlusButton]){
+			buttonState[WiiRemotePlusButton] = NO;
+			[_delegate buttonChanged:WiiRemotePlusButton isPressed:buttonState[WiiRemotePlusButton]];
+		}
+	}
+	
+	if (data & kWiiRemoteUpButton){
+		if (!buttonState[WiiRemoteUpButton]){
+			buttonState[WiiRemoteUpButton] = YES;
+			[_delegate buttonChanged:WiiRemoteUpButton isPressed:buttonState[WiiRemoteUpButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteUpButton]){
+			buttonState[WiiRemoteUpButton] = NO;
+			[_delegate buttonChanged:WiiRemoteUpButton isPressed:buttonState[WiiRemoteUpButton]];
+		}
+	}
+	
+	if (data & kWiiRemoteDownButton){
+		if (!buttonState[WiiRemoteDownButton]){
+			buttonState[WiiRemoteDownButton] = YES;
+			[_delegate buttonChanged:WiiRemoteDownButton isPressed:buttonState[WiiRemoteDownButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteDownButton]){
+			buttonState[WiiRemoteDownButton] = NO;
+			[_delegate buttonChanged:WiiRemoteDownButton isPressed:buttonState[WiiRemoteDownButton]];
+		}
+	}
+
+	if (data & kWiiRemoteLeftButton){
+		if (!buttonState[WiiRemoteLeftButton]){
+			buttonState[WiiRemoteLeftButton] = YES;
+			[_delegate buttonChanged:WiiRemoteLeftButton isPressed:buttonState[WiiRemoteLeftButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteLeftButton]){
+			buttonState[WiiRemoteLeftButton] = NO;
+			[_delegate buttonChanged:WiiRemoteLeftButton isPressed:buttonState[WiiRemoteLeftButton]];
+		}
+	}
+	
+	
+	if (data & kWiiRemoteRightButton){
+		if (!buttonState[WiiRemoteRightButton]){
+			buttonState[WiiRemoteRightButton] = YES;
+			[_delegate buttonChanged:WiiRemoteRightButton isPressed:buttonState[WiiRemoteRightButton]];
+		}
+	}else{
+		if (buttonState[WiiRemoteRightButton]){
+			buttonState[WiiRemoteRightButton] = NO;
+			[_delegate buttonChanged:WiiRemoteRightButton isPressed:buttonState[WiiRemoteRightButton]];
+		}
+	}
+}
+
+- (void)sendWiiNunchukButtonEvent:(UInt16)data{
+	if (data & kWiiNunchukCButton){
+		if (!buttonState[WiiNunchukCButton]){
+			buttonState[WiiNunchukCButton] = YES;
+			[_delegate buttonChanged:WiiNunchukCButton isPressed:buttonState[WiiNunchukCButton]];
+		}
+	}else{
+		if (buttonState[WiiNunchukCButton]){
+			buttonState[WiiNunchukCButton] = NO;
+			[_delegate buttonChanged:WiiNunchukCButton isPressed:buttonState[WiiNunchukCButton]];
+		}
+	}
+	
+	if (data & kWiiNunchukZButton){
+		if (!buttonState[WiiNunchukZButton]){
+			buttonState[WiiNunchukZButton] = YES;
+			[_delegate buttonChanged:WiiNunchukZButton isPressed:buttonState[WiiNunchukZButton]];
+		}
+	}else{
+		if (buttonState[WiiNunchukZButton]){
+			buttonState[WiiNunchukZButton] = NO;
+			[_delegate buttonChanged:WiiNunchukZButton isPressed:buttonState[WiiNunchukZButton]];
+		}
+	}
+}
+
 
 - (void)getCurrentStatus:(NSTimer*)timer{
 	unsigned char cmd[] = {0x15, 0x00};
 	[self sendCommand:cmd length:2];
 }
+
+- (BOOL)isExpansionPortUsed{
+	return isExpansionPortUsed;
+}
+
+- (BOOL)isButtonPressed:(WiiButtonType)type{
+	return buttonState[type];
+}
+
 
 @end

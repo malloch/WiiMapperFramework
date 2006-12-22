@@ -15,19 +15,60 @@ typedef struct {
 	int x, y, s;
 } IRData;
 
+typedef struct {
+	unsigned char accX_zero, accY_zero, accZ_zero, accX_1g, accY_1g, accZ_1g; 
+} WiiAccCalibData;
+
+typedef UInt16 WiiButtonBitMask;
+enum {
+	kWiiRemoteTwoButton			= 0x0001,
+	kWiiRemoteOneButton			= 0x0002,
+	kWiiRemoteBButton			= 0x0004,
+	kWiiRemoteAButton			= 0x0008,
+	kWiiRemoteMinusButton		= 0x0010,
+	kWiiRemoteHomeButton		= 0x0080,
+	kWiiRemoteLeftButton		= 0x0100,
+	kWiiRemoteRightButton		= 0x0200,
+	kWiiRemoteDownButton		= 0x0400,
+	kWiiRemoteUpButton			= 0x0800,
+	kWiiRemotePlusButton		= 0x1000,
+	
+	kWiiNunchukZButton			= 0x0001,
+	kWiiNunchukCButton			= 0x0002
+};
+
+
 typedef UInt16 WiiButtonType;
 enum {
-	kWiiRemoteTwoButton		= 0x0001,
-	kWiiRemoteOneButton		= 0x0002,
-	kWiiRemoteBButton		= 0x0004,
-	kWiiRemoteAButton		= 0x0008,
-	kWiiRemoteMinusButton	= 0x0010,
-	kWiiRemoteHomeButton	= 0x0080,
-	kWiiRemoteLeftButton	= 0x0100,
-	kWiiRemoteRightButton	= 0x0200,
-	kWiiRemoteDownButton	= 0x0400,
-	kWiiRemoteUpButton		= 0x0800,
-	kWiiRemotePlusButton	= 0x1000
+	WiiRemoteAButton,
+	WiiRemoteBButton,
+	WiiRemoteOneButton,
+	WiiRemoteTwoButton,
+	WiiRemoteMinusButton,
+	WiiRemoteHomeButton,
+	WiiRemotePlusButton,
+	WiiRemoteUpButton,
+	WiiRemoteDownButton,
+	WiiRemoteLeftButton,
+	WiiRemoteRightButton,
+	
+	WiiNunchukZButton,
+	WiiNunchukCButton
+};
+
+
+typedef UInt16 WiiAccelerationSensorType;
+enum{
+	WiiRemoteAccelerationSensor,
+	WiiNunchukAccelerationSensor
+};
+
+
+typedef UInt16 WiiJoyStickType;
+enum{
+	WiiNunchukJoyStick,
+	WiiClassicControllerLeftJoyStick,
+	WiiClassicControllerRightJoyStick
 };
 
 
@@ -49,6 +90,7 @@ enum {
 	int orientation;
 	int leftPoint; // is point 0 or 1 on the left. -1 when not tracking.
 	
+	WiiAccCalibData wiiCalibData, nunchukCalibData;
 	IRData	irData[4];
 	double batteryLevel;
 	double warningBatteryLevel;
@@ -57,19 +99,38 @@ enum {
 	BOOL isLED1Illuminated, isLED2Illuminated, isLED3Illuminated, isLED4Illuminated;
 	NSTimer* statusTimer;
 	IOBluetoothUserNotification *disconnectNotification;
-}
+	
+	//BOOL buttonAIsEnabled, buttonBIsEnabled, buttonOneIsEnabled, buttonTwoIsEnabled, buttonMinusIsEnabled, buttonHomeIsEnabled, buttonPlusIsEnabled, buttonLeftIsEnabled, buttonRightIsEnabled, buttonUpIsEnabled, buttonDownIsEnabled;
+	BOOL buttonState[13];
+	
+	
+	
+	//nunchuk
+	unsigned char xStick;
+	unsigned char yStick;
+	unsigned char nAccX;
+	unsigned char nAccY;
+	unsigned char nAccZ;
+	unsigned char nButtonData;
+	
+	//BOOL buttonCIsEnabled, buttonZIsEnabled;
+} 
 
 - (NSString*) address;
 - (IOReturn)connectTo:(IOBluetoothDevice*)device;
 - (void)setDelegate:(id)delegate;
 - (double)batteryLevel;
+- (BOOL)isExpansionPortUsed;
 - (BOOL)available;
+- (BOOL)isButtonPressed:(WiiButtonType)type;
 - (IOReturn)closeConnection;
 - (IOReturn)setIRSensorEnabled:(BOOL)enabled;
 - (IOReturn)setForceFeedbackEnabled:(BOOL)enabled;
 - (IOReturn)setMotionSensorEnabled:(BOOL)enabled;
+- (IOReturn)setNunchukEnabled:(BOOL)enabled;
 - (IOReturn)setLEDEnabled1:(BOOL)enabled1 enabled2:(BOOL)enabled2 enabled3:(BOOL)enabled3 enabled4:(BOOL)enabled4;
 - (IOReturn)writeData:(const unsigned char*)data at:(unsigned long)address length:(size_t)length;
+- (IOReturn)readData:(unsigned long)address length:(unsigned short)length;
 - (IOReturn)sendCommand:(const unsigned char*)data length:(size_t)length;
 
 
@@ -78,8 +139,14 @@ enum {
 
 @interface NSObject( WiiRemoteDelegate )
 
+- (void) irPointMovedX:(float)px Y:(float)py;
+- (void) buttonChanged:(WiiButtonType)type isPressed:(BOOL)isPressed;
+- (void) accelerationChanged:(WiiAccelerationSensorType)type accX:(unsigned char)accX accY:(unsigned char)accY accZ:(unsigned char)accZ;
+- (void) joyStickChanged:(WiiJoyStickType)type tiltX:(unsigned char)tiltX tiltY:(unsigned char)tiltY;
+- (void) wiiRemoteDisconnected:(IOBluetoothDevice*)device;
+
+
 - (void) dataChanged:(unsigned short)buttonData accX:(unsigned char)accX accY:(unsigned char)accY accZ:(unsigned char)accZ mouseX:(float)mx mouseY:(float)my;
-- (void) wiiRemoteDisconnected;
 
 
 @end
