@@ -12,6 +12,23 @@
 typedef unsigned char darr[];
 
 
+typedef UInt16 WiiButtonBitMask;
+enum {
+	kWiiRemoteTwoButton			= 0x0001,
+	kWiiRemoteOneButton			= 0x0002,
+	kWiiRemoteBButton			= 0x0004,
+	kWiiRemoteAButton			= 0x0008,
+	kWiiRemoteMinusButton		= 0x0010,
+	kWiiRemoteHomeButton		= 0x0080,
+	kWiiRemoteLeftButton		= 0x0100,
+	kWiiRemoteRightButton		= 0x0200,
+	kWiiRemoteDownButton		= 0x0400,
+	kWiiRemoteUpButton			= 0x0800,
+	kWiiRemotePlusButton		= 0x1000,
+	
+	kWiiNunchukZButton			= 0x0001,
+	kWiiNunchukCButton			= 0x0002
+};
 
 
 
@@ -41,16 +58,12 @@ typedef unsigned char darr[];
 	isVibrationEnabled = NO;
 	isExpansionPortEnabled = NO;
 	
-	//buttonAIsEnabled = buttonBIsEnabled = buttonOneIsEnabled = buttonTwoIsEnabled = buttonMinusIsEnabled = buttonHomeIsEnabled = buttonPlusIsEnabled = buttonLeftIsEnabled = buttonRightIsEnabled = buttonUpIsEnabled = buttonDownIsEnabled = NO;
-	
 	return self;
 }
 
 - (void)dealloc{
-	//NSLog(@"dealloc");
 	[self closeConnection];
 
-	//NSLog(@"closed in dealloc");
 
 	[super dealloc];
 }
@@ -87,7 +100,6 @@ typedef unsigned char darr[];
 		usleep(10000); //  wait 10ms
 	}
 	
-	//[self retain];
 	
 	disconnectNotification = [wiiDevice registerForDisconnectNotification:self selector:@selector(disconnected:fromDevice:)];
 	
@@ -154,7 +166,6 @@ typedef unsigned char darr[];
 }
 
 - (void)disconnected: (IOBluetoothUserNotification*)note fromDevice: (IOBluetoothDevice*)device {
-	//NSLog(@"disconnected.");
 	
 	if ([[device getAddressString] isEqualToString:[self address]]){
 		[self closeConnection];
@@ -176,12 +187,13 @@ typedef unsigned char darr[];
 	
 	int i;
 	
+	/**
 	printf ("send%3d:", length);
 	for(i=0 ; i<length ; i++) {
 		printf(" %02X", buf[i]);
 	}
 	printf("\n");
-	
+	**/
 	IOReturn ret;
 	
 	for (i = 0; i < 10; i++){
@@ -263,7 +275,6 @@ typedef unsigned char darr[];
 	
 	[self sendCommand:cmd length:3];
 	
-	//unsigned char cmd[] = {0x16, 0x04, 0xA4, 0x00, 0x40, 0x41};
 	IOReturn ret = [self writeData:(darr){0x00} at:(unsigned long)0x04A40040 length:1];
 	
 	if (ret == kIOReturnSuccess){
@@ -315,7 +326,6 @@ typedef unsigned char darr[];
 		// probably should do some writes to power down the camera, save battery
 		// but don't know how yet.
 
-		//bug fix #1614587 
 		[self setMotionSensorEnabled:isMotionSensorEnabled];
 		[self setForceFeedbackEnabled:isVibrationEnabled];
 		[self setExpansionPortEnabled:isExpansionPortEnabled];
@@ -357,6 +367,8 @@ typedef unsigned char darr[];
 	
 	unsigned char cmd[7];
 	
+	//i'm still not sure whether i don't have to swap these args
+	
 	//unsigned long addr = CFSwapInt32HostToBig(address);
 	unsigned long addr = address;
 	//unsigned short len = CFSwapInt16HostToBig(length);
@@ -396,7 +408,6 @@ typedef unsigned char darr[];
 			ret = [cchan closeChannel];
 			trycount++;
 		}while(ret != kIOReturnSuccess && trycount < 10);
-		//NSLog(@"cchan count: %d", [cchan retainCount] );
 		[cchan release];
 	}
 
@@ -408,7 +419,6 @@ typedef unsigned char darr[];
 			ret = [ichan closeChannel];
 			trycount++;
 		}while(ret != kIOReturnSuccess && trycount < 10);
-		//NSLog(@"ichan count: %d", [ichan retainCount] );
 		[ichan release];
 	}
 
@@ -427,12 +437,10 @@ typedef unsigned char darr[];
 	wiiDevice = nil;
 	
 	// no longer a delegate
-	//[self release];
 	if (statusTimer){
 		[statusTimer invalidate];
 		[statusTimer release];
 		statusTimer = nil;
-		//NSLog(@"release timer");
 
 	}
 
@@ -461,14 +469,10 @@ typedef unsigned char darr[];
 	
 	//reading ram data
 	if (dp[1] == 0x21){
-		
-		NSLog(@"errorcode: %d", (dp[4] & 0x0F));
-		NSLog(@"size: %d", (dp[4] >> 4));
 		 
 		
 		//wii calibration data
 		if (dataLength >= 14 && dp[5] == 0x00 && dp[6] == 0x16){
-			NSLog(@"calibData");
 
 			wiiCalibData.accX_zero = dp[7];
 			wiiCalibData.accY_zero = dp[8];
@@ -480,16 +484,21 @@ typedef unsigned char darr[];
 		}
 		
 		//Nunchuk calibration data
-		if (dataLength >= 14 && dp[5] == 0x00 && dp[6] == 0x20){
-			NSLog(@"nuncnuk calibData");
+		if (dataLength >= 22 && dp[5] == 0x00 && dp[6] == 0x20){
 			nunchukCalibData.accX_zero = (dp[7] ^ 0x17) + 0x17;
 			nunchukCalibData.accY_zero = (dp[8] ^ 0x17) + 0x17;
 			nunchukCalibData.accZ_zero = (dp[9] ^ 0x17) + 0x17;
 			
-			nunchukCalibData.accX_1g = (dp[10] ^ 0x17) + 0x17;
-			nunchukCalibData.accY_1g = (dp[11] ^ 0x17) + 0x17;
-			nunchukCalibData.accZ_1g = (dp[12] ^ 0x17) + 0x17;
+			nunchukCalibData.accX_1g = (dp[11] ^ 0x17) + 0x17;
+			nunchukCalibData.accY_1g = (dp[12] ^ 0x17) + 0x17;
+			nunchukCalibData.accZ_1g = (dp[13] ^ 0x17) + 0x17;
 			
+			nunchukJoyStickCalibData.x_max = (dp[15] ^ 0x17) + 0x17;
+			nunchukJoyStickCalibData.x_min = (dp[16] ^ 0x17) + 0x17;
+			nunchukJoyStickCalibData.x_center = (dp[17] ^ 0x17) + 0x17;
+			nunchukJoyStickCalibData.y_max = (dp[19] ^ 0x17) + 0x17;
+			nunchukJoyStickCalibData.y_min = (dp[20] ^ 0x17) + 0x17;
+			nunchukJoyStickCalibData.y_center = (dp[21] ^ 0x17) + 0x17;
 		} 
 	}
 	
@@ -546,8 +555,6 @@ typedef unsigned char darr[];
 			isLED4Illuminated = NO;
 		}
 
-		//have to reset settings (vibration, motion, IR and so on...)
-		//[self setIRSensorEnabled:isIRSensorEnabled];
 		
 	}
 	
@@ -841,5 +848,27 @@ typedef unsigned char darr[];
 	return buttonState[type];
 }
 
+- (WiiJoyStickCalibData)joyStickCalibData:(WiiJoyStickType)type{
+	WiiJoyStickCalibData data;
+	
+	switch(type){
+		case WiiNunchukJoyStick:
+			return nunchukJoyStickCalibData;
+		default:
+			return data;
+	}
+}
+- (WiiAccCalibData)accCalibData:(WiiAccelerationSensorType)type{
+	WiiAccCalibData data;
+	
+	switch(type){
+		case WiiRemoteAccelerationSensor:
+			return wiiCalibData;
+		case WiiNunchukAccelerationSensor:
+			return nunchukCalibData;
+		default:
+			return data;
+	}
+}
 
 @end

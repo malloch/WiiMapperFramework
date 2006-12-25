@@ -19,23 +19,9 @@ typedef struct {
 	unsigned char accX_zero, accY_zero, accZ_zero, accX_1g, accY_1g, accZ_1g; 
 } WiiAccCalibData;
 
-typedef UInt16 WiiButtonBitMask;
-enum {
-	kWiiRemoteTwoButton			= 0x0001,
-	kWiiRemoteOneButton			= 0x0002,
-	kWiiRemoteBButton			= 0x0004,
-	kWiiRemoteAButton			= 0x0008,
-	kWiiRemoteMinusButton		= 0x0010,
-	kWiiRemoteHomeButton		= 0x0080,
-	kWiiRemoteLeftButton		= 0x0100,
-	kWiiRemoteRightButton		= 0x0200,
-	kWiiRemoteDownButton		= 0x0400,
-	kWiiRemoteUpButton			= 0x0800,
-	kWiiRemotePlusButton		= 0x1000,
-	
-	kWiiNunchukZButton			= 0x0001,
-	kWiiNunchukCButton			= 0x0002
-};
+typedef struct {
+	unsigned char x_min, x_max, x_center, y_min, y_max, y_center; 
+} WiiJoyStickCalibData;
 
 
 typedef UInt16 WiiButtonType;
@@ -67,8 +53,8 @@ enum{
 typedef UInt16 WiiJoyStickType;
 enum{
 	WiiNunchukJoyStick,
-	WiiClassicControllerLeftJoyStick,
-	WiiClassicControllerRightJoyStick
+	WiiClassicControllerLeftJoyStick,	//not available
+	WiiClassicControllerRightJoyStick	//not available
 };
 
 
@@ -91,6 +77,7 @@ enum{
 	int leftPoint; // is point 0 or 1 on the left. -1 when not tracking.
 	
 	WiiAccCalibData wiiCalibData, nunchukCalibData;
+	WiiJoyStickCalibData nunchukJoyStickCalibData;
 	IRData	irData[4];
 	double batteryLevel;
 	double warningBatteryLevel;
@@ -100,8 +87,7 @@ enum{
 	BOOL isLED1Illuminated, isLED2Illuminated, isLED3Illuminated, isLED4Illuminated;
 	NSTimer* statusTimer;
 	IOBluetoothUserNotification *disconnectNotification;
-	
-	//BOOL buttonAIsEnabled, buttonBIsEnabled, buttonOneIsEnabled, buttonTwoIsEnabled, buttonMinusIsEnabled, buttonHomeIsEnabled, buttonPlusIsEnabled, buttonLeftIsEnabled, buttonRightIsEnabled, buttonUpIsEnabled, buttonDownIsEnabled;
+
 	BOOL buttonState[13];
 	
 	
@@ -114,16 +100,18 @@ enum{
 	unsigned char nAccZ;
 	unsigned char nButtonData;
 	
-	//BOOL buttonCIsEnabled, buttonZIsEnabled;
 } 
 
 - (NSString*) address;
-- (IOReturn)connectTo:(IOBluetoothDevice*)device;
 - (void)setDelegate:(id)delegate;
 - (double)batteryLevel;
 - (BOOL)isExpansionPortAttached;
 - (BOOL)available;
 - (BOOL)isButtonPressed:(WiiButtonType)type;
+- (WiiJoyStickCalibData)joyStickCalibData:(WiiJoyStickType)type;
+- (WiiAccCalibData)accCalibData:(WiiAccelerationSensorType)type;
+
+- (IOReturn)connectTo:(IOBluetoothDevice*)device;
 - (IOReturn)closeConnection;
 - (IOReturn)setIRSensorEnabled:(BOOL)enabled;
 - (IOReturn)setForceFeedbackEnabled:(BOOL)enabled;
@@ -147,7 +135,7 @@ enum{
 - (void) wiiRemoteDisconnected:(IOBluetoothDevice*)device;
 
 
-- (void) dataChanged:(unsigned short)buttonData accX:(unsigned char)accX accY:(unsigned char)accY accZ:(unsigned char)accZ mouseX:(float)mx mouseY:(float)my;
+//- (void) dataChanged:(unsigned short)buttonData accX:(unsigned char)accX accY:(unsigned char)accY accZ:(unsigned char)accZ mouseX:(float)mx mouseY:(float)my;
 
 
 @end
