@@ -87,7 +87,6 @@ enum{
 	BOOL isLED1Illuminated, isLED2Illuminated, isLED3Illuminated, isLED4Illuminated;
 	NSTimer* statusTimer;
 	IOBluetoothUserNotification *disconnectNotification;
-
 	BOOL buttonState[13];
 	
 	

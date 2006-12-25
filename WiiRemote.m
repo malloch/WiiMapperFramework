@@ -161,7 +161,12 @@ enum {
 	
 	statusTimer = [[NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(getCurrentStatus:) userInfo:nil repeats:YES] retain];
 	[self getCurrentStatus:nil];
-	[self readData:0x16 length:7];
+	
+	for(trycount = 0; trycount< 10; trycount++){
+		[self readData:0x0010 length:16];
+		usleep(10000);
+	}
+	
 	return ret;
 }
 
@@ -187,13 +192,13 @@ enum {
 	
 	int i;
 	
-	/**
-	printf ("send%3d:", length);
-	for(i=0 ; i<length ; i++) {
-		printf(" %02X", buf[i]);
-	}
-	printf("\n");
-	**/
+	
+//	printf ("send%3d:", length);
+//	for(i=0 ; i<length ; i++) {
+//		printf(" %02X", buf[i]);
+//	}
+//	printf("\n");
+	
 	IOReturn ret;
 	
 	for (i = 0; i < 10; i++){
@@ -464,24 +469,23 @@ enum {
 			printf(" %02X", dp[i]);
 		}
 		printf("\n");
-	}
-	 **/
+	}**/
+	 
 	
 	//reading ram data
 	if (dp[1] == 0x21){
 		 
-		
 		//wii calibration data
-		if (dataLength >= 14 && dp[5] == 0x00 && dp[6] == 0x16){
-
-			wiiCalibData.accX_zero = dp[7];
-			wiiCalibData.accY_zero = dp[8];
-			wiiCalibData.accZ_zero = dp[9];
+		if (dataLength >= 20 && dp[5] == 0x00 && dp[6] == 0x10){
+			wiiCalibData.accX_zero = dp[13];
+			wiiCalibData.accY_zero = dp[14];
+			wiiCalibData.accZ_zero = dp[15];
 			
-			wiiCalibData.accX_1g = dp[11];
-			wiiCalibData.accY_1g = dp[12];
-			wiiCalibData.accZ_1g = dp[13];
+			wiiCalibData.accX_1g = dp[17];
+			wiiCalibData.accY_1g = dp[18];
+			wiiCalibData.accZ_1g = dp[19];
 		}
+				  
 		
 		//Nunchuk calibration data
 		if (dataLength >= 22 && dp[5] == 0x00 && dp[6] == 0x20){

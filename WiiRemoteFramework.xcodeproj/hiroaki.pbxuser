@@ -91,19 +91,22 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 188749797;
-			PBXWorkspaceStateSaveDate = 188749797;
+			PBXPerProjectTemplateStateSaveDate = 188755091;
+			PBXWorkspaceStateSaveDate = 188755091;
 		};
 		perUserProjectItems = {
 			5335B48F0B3FFCF100B21C9A = 5335B48F0B3FFCF100B21C9A /* PBXTextBookmark */;
 			5335B4900B3FFCF100B21C9A = 5335B4900B3FFCF100B21C9A /* PBXTextBookmark */;
-			5335B4910B3FFCF100B21C9A = 5335B4910B3FFCF100B21C9A /* PBXTextBookmark */;
-			5335B4920B3FFCF100B21C9A = 5335B4920B3FFCF100B21C9A /* PBXTextBookmark */;
-			5335B4930B3FFCF100B21C9A = 5335B4930B3FFCF100B21C9A /* PBXTextBookmark */;
-			5335B4940B3FFCF100B21C9A = 5335B4940B3FFCF100B21C9A /* PBXTextBookmark */;
-			5335B4950B3FFCF100B21C9A = 5335B4950B3FFCF100B21C9A /* PBXTextBookmark */;
 			5335B5700B40160700B21C9A = 5335B5700B40160700B21C9A /* PBXTextBookmark */;
-			5335B5710B40160700B21C9A = 5335B5710B40160700B21C9A /* PBXTextBookmark */;
+			5335B5BA0B401D9000B21C9A = 5335B5BA0B401D9000B21C9A /* PBXTextBookmark */;
+			5335B5C40B401D9000B21C9A = 5335B5C40B401D9000B21C9A /* PBXTextBookmark */;
+			5335B5C50B401D9000B21C9A = 5335B5C50B401D9000B21C9A /* PBXTextBookmark */;
+			5335B5C60B401D9000B21C9A = 5335B5C60B401D9000B21C9A /* PBXTextBookmark */;
+			5335B5C70B401D9000B21C9A = 5335B5C70B401D9000B21C9A /* PBXTextBookmark */;
+			5335B5CA0B401D9000B21C9A = 5335B5CA0B401D9000B21C9A /* PBXTextBookmark */;
+			5335B5CB0B401D9000B21C9A = 5335B5CB0B401D9000B21C9A /* PBXTextBookmark */;
+			5335B5CC0B401D9000B21C9A = 5335B5CC0B401D9000B21C9A /* PBXTextBookmark */;
+			5335B5CD0B401D9000B21C9A = 5335B5CD0B401D9000B21C9A /* PBXTextBookmark */;
 			5351D5400B2D671C00F86B96 = 5351D5400B2D671C00F86B96 /* PBXTextBookmark */;
 			5351D5F50B2D92AE00F86B96 = 5351D5F50B2D92AE00F86B96 /* PBXTextBookmark */;
 			53CC5D4C0B3AA56B00F1C7B7 = 53CC5D4C0B3AA56B00F1C7B7 /* PBXTextBookmark */;
@@ -123,10 +126,10 @@
 	};
 	53144A8B0B30495700757188 /* HISTORY.txt */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1019, 923}}";
-			sepNavSelRange = "{110, 0}";
-			sepNavVisRect = "{{0, 0}, {1019, 923}}";
-			sepNavWindowFrame = "{{130, 31}, {1058, 1037}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1013, 923}}";
+			sepNavSelRange = "{594, 0}";
+			sepNavVisRect = "{{0, 0}, {1013, 923}}";
+			sepNavWindowFrame = "{{609, 6}, {1058, 1037}}";
 		};
 	};
 	531893070B2C37B700277BC3 /* Source Control */ = {
@@ -162,56 +165,6 @@
 		vrLen = 455;
 		vrLoc = 20806;
 	};
-	5335B4910B3FFCF100B21C9A /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
-		name = "if (isExpansionPortEnabled) cmd[2] |= 0x04;";
-		rLen = 71;
-		rLoc = 4718;
-		rType = 0;
-		vrLen = 832;
-		vrLoc = 4155;
-	};
-	5335B4920B3FFCF100B21C9A /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 5351D50B0B2D34DA00F86B96 /* WiiRemote.h */;
-		name = "WiiRemote.h: isMotionSensorEnabled";
-		rLen = 0;
-		rLoc = 1742;
-		rType = 0;
-		vrLen = 903;
-		vrLoc = 1742;
-	};
-	5335B4930B3FFCF100B21C9A /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
-		name = "WiiRemote.m: 836";
-		rLen = 0;
-		rLoc = 21315;
-		rType = 0;
-		vrLen = 455;
-		vrLoc = 20806;
-	};
-	5335B4940B3FFCF100B21C9A /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 5351D50B0B2D34DA00F86B96 /* WiiRemote.h */;
-		name = "WiiRemote.h: setExpansionPortEnabled:";
-		rLen = 0;
-		rLoc = 2684;
-		rType = 0;
-		vrLen = 987;
-		vrLoc = 2645;
-	};
-	5335B4950B3FFCF100B21C9A /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
-		name = "-(IOReturn)setExpansionPortEnabled:(BOOL)enabled";
-		rLen = 48;
-		rLoc = 5683;
-		rType = 0;
-		vrLen = 688;
-		vrLoc = 5547;
-	};
 	5335B5700B40160700B21C9A /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
@@ -222,15 +175,89 @@
 		vrLen = 0;
 		vrLoc = 0;
 	};
-	5335B5710B40160700B21C9A /* PBXTextBookmark */ = {
+	5335B5BA0B401D9000B21C9A /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
 		name = "-(IOReturn)setExpansionPortEnabled:(BOOL)enabled";
 		rLen = 48;
 		rLoc = 5683;
 		rType = 0;
-		vrLen = 656;
-		vrLoc = 5490;
+		vrLen = 0;
+		vrLoc = 0;
+	};
+	5335B5C40B401D9000B21C9A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
+		name = "@\"WiiRemoteExpansionPortChangedNotification\"";
+		rLen = 44;
+		rLoc = 12232;
+		rType = 0;
+		vrLen = 1431;
+		vrLoc = 11488;
+	};
+	5335B5C50B401D9000B21C9A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50B0B2D34DA00F86B96 /* WiiRemote.h */;
+		rLen = 0;
+		rLoc = 2147483647;
+		rType = 0;
+	};
+	5335B5C60B401D9000B21C9A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
+		name = "@\"WiiRemoteExpansionPortChangedNotification\"";
+		rLen = 44;
+		rLoc = 12232;
+		rType = 0;
+		vrLen = 1431;
+		vrLoc = 11488;
+	};
+	5335B5C70B401D9000B21C9A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50B0B2D34DA00F86B96 /* WiiRemote.h */;
+		name = "WiiRemote.h: irPointMovedX:Y:";
+		rLen = 414;
+		rLoc = 3120;
+		rType = 0;
+		vrLen = 2045;
+		vrLoc = 1652;
+	};
+	5335B5CA0B401D9000B21C9A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
+		name = "WiiRemote.m: 59";
+		rLen = 0;
+		rLoc = 1058;
+		rType = 0;
+		vrLen = 816;
+		vrLoc = 441;
+	};
+	5335B5CB0B401D9000B21C9A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50B0B2D34DA00F86B96 /* WiiRemote.h */;
+		rLen = 0;
+		rLoc = 3703;
+		rType = 0;
+	};
+	5335B5CC0B401D9000B21C9A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50C0B2D34DA00F86B96 /* WiiRemote.m */;
+		name = "WiiRemote.m: 59";
+		rLen = 0;
+		rLoc = 1058;
+		rType = 0;
+		vrLen = 816;
+		vrLoc = 441;
+	};
+	5335B5CD0B401D9000B21C9A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5351D50B0B2D34DA00F86B96 /* WiiRemote.h */;
+		name = "WiiRemote.h: 90";
+		rLen = 0;
+		rLoc = 1934;
+		rType = 0;
+		vrLen = 1274;
+		vrLoc = 961;
 	};
 	5351D4BF0B2D1C2600F86B96 /* XCBreakpointsBucket */ = {
 		isa = XCBreakpointsBucket;
@@ -243,7 +270,7 @@
 			sepNavIntBoundsRect = "{{0, 0}, {982, 1988}}";
 			sepNavSelRange = "{1934, 0}";
 			sepNavVisRect = "{{0, 735}, {982, 764}}";
-			sepNavWindowFrame = "{{300, 0}, {1027, 878}}";
+			sepNavWindowFrame = "{{413, 255}, {1027, 878}}";
 		};
 	};
 	5351D50C0B2D34DA00F86B96 /* WiiRemote.m */ = {
