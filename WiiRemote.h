@@ -95,7 +95,8 @@ enum{
 	double batteryLevel;
 	double warningBatteryLevel;
 	
-	BOOL isMotionSensorEnabled, isIRSensorEnabled, isVibrationEnabled, isExpansionPortUsed;
+	BOOL isMotionSensorEnabled, isIRSensorEnabled, isVibrationEnabled, isExpansionPortEnabled;
+	BOOL isExpansionPortAttached;
 	BOOL isLED1Illuminated, isLED2Illuminated, isLED3Illuminated, isLED4Illuminated;
 	NSTimer* statusTimer;
 	IOBluetoothUserNotification *disconnectNotification;
@@ -120,14 +121,14 @@ enum{
 - (IOReturn)connectTo:(IOBluetoothDevice*)device;
 - (void)setDelegate:(id)delegate;
 - (double)batteryLevel;
-- (BOOL)isExpansionPortUsed;
+- (BOOL)isExpansionPortAttached;
 - (BOOL)available;
 - (BOOL)isButtonPressed:(WiiButtonType)type;
 - (IOReturn)closeConnection;
 - (IOReturn)setIRSensorEnabled:(BOOL)enabled;
 - (IOReturn)setForceFeedbackEnabled:(BOOL)enabled;
 - (IOReturn)setMotionSensorEnabled:(BOOL)enabled;
-- (IOReturn)setNunchukEnabled:(BOOL)enabled;
+- (IOReturn)setExpansionPortEnabled:(BOOL)enabled;
 - (IOReturn)setLEDEnabled1:(BOOL)enabled1 enabled2:(BOOL)enabled2 enabled3:(BOOL)enabled3 enabled4:(BOOL)enabled4;
 - (IOReturn)writeData:(const unsigned char*)data at:(unsigned long)address length:(size_t)length;
 - (IOReturn)readData:(unsigned long)address length:(unsigned short)length;

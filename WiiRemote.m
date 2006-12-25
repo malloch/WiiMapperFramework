@@ -39,7 +39,7 @@ typedef unsigned char darr[];
 	isIRSensorEnabled = NO;
 	isMotionSensorEnabled = NO;
 	isVibrationEnabled = NO;
-	isExpansionPortUsed = NO;
+	isExpansionPortEnabled = NO;
 	
 	//buttonAIsEnabled = buttonBIsEnabled = buttonOneIsEnabled = buttonTwoIsEnabled = buttonMinusIsEnabled = buttonHomeIsEnabled = buttonPlusIsEnabled = buttonLeftIsEnabled = buttonRightIsEnabled = buttonUpIsEnabled = buttonDownIsEnabled = NO;
 	
@@ -175,13 +175,13 @@ typedef unsigned char darr[];
 	else				length++;
 	
 	int i;
-	/**
+	
 	printf ("send%3d:", length);
 	for(i=0 ; i<length ; i++) {
 		printf(" %02X", buf[i]);
 	}
 	printf("\n");
-	**/
+	
 	IOReturn ret;
 	
 	for (i = 0; i < 10; i++){
@@ -214,6 +214,7 @@ typedef unsigned char darr[];
 	if (isVibrationEnabled)	cmd[1] |= 0x01;
 	if (isMotionSensorEnabled)	cmd[2] |= 0x01;
 	if (isIRSensorEnabled)	cmd[2] |= 0x02;
+	if (isExpansionPortEnabled && isExpansionPortAttached) cmd[2] = 0x37;
 	
 	return [self sendCommand:cmd length:3];
 }
@@ -246,19 +247,24 @@ typedef unsigned char darr[];
 	return 	[self sendCommand:cmd length:2];
 }
 
--(IOReturn)setNunchukEnabled:(BOOL)enabled{
+-(IOReturn)setExpansionPortEnabled:(BOOL)enabled{
 	
-	[self setIRSensorEnabled:isIRSensorEnabled];
+
+
+	isExpansionPortEnabled = enabled;
+	if (!isExpansionPortAttached)
+		isExpansionPortEnabled = NO;
 	
-	//hmm...
-	if (!enabled || !isExpansionPortUsed)
-		return kIOReturnSuccess;
+	unsigned char cmd[] = {0x12, 0x02, 0x30};
+	if (isVibrationEnabled)	cmd[1] |= 0x01;
+	if (isMotionSensorEnabled)	cmd[2] |= 0x01;
+	if (isIRSensorEnabled)	cmd[2] |= 0x02;
+	if (isExpansionPortEnabled && isExpansionPortAttached) cmd[2] = 0x37;
+	
+	[self sendCommand:cmd length:3];
 	
 	//unsigned char cmd[] = {0x16, 0x04, 0xA4, 0x00, 0x40, 0x41};
-	unsigned char cmd[] = {0x00};
 	IOReturn ret = [self writeData:(darr){0x00} at:(unsigned long)0x04A40040 length:1];
-	
-	//IOReturn ret = [self sendCommand:cmd length:6];
 	
 	if (ret == kIOReturnSuccess){
 		//get calbdata
@@ -312,6 +318,7 @@ typedef unsigned char darr[];
 		//bug fix #1614587 
 		[self setMotionSensorEnabled:isMotionSensorEnabled];
 		[self setForceFeedbackEnabled:isVibrationEnabled];
+		[self setExpansionPortEnabled:isExpansionPortEnabled];
 	}
 	
 	return kIOReturnSuccess;
@@ -352,7 +359,8 @@ typedef unsigned char darr[];
 	
 	//unsigned long addr = CFSwapInt32HostToBig(address);
 	unsigned long addr = address;
-	unsigned short len = CFSwapInt16HostToBig(length);
+	//unsigned short len = CFSwapInt16HostToBig(length);
+	unsigned short len = length;
 	
 	cmd[0] = 0x17;
 	cmd[1] = (addr>>24)&0xFF;
@@ -440,7 +448,7 @@ typedef unsigned char darr[];
 	unsigned char* dp = (unsigned char*)dataPointer;
 	
 	/**
-	if (dp[1] == 0x22){
+	if (dp[1] == 0x21){
 		int i;
 		
 		printf ("ack%3d:", dataLength);
@@ -448,14 +456,19 @@ typedef unsigned char darr[];
 			printf(" %02X", dp[i]);
 		}
 		printf("\n");
-	}**/
+	}
+	 **/
 	
 	//reading ram data
 	if (dp[1] == 0x21){
-				
+		
+		NSLog(@"errorcode: %d", (dp[4] & 0x0F));
+		NSLog(@"size: %d", (dp[4] >> 4));
+		 
+		
 		//wii calibration data
 		if (dataLength >= 14 && dp[5] == 0x00 && dp[6] == 0x16){
-			//NSLog(@"calibData");
+			NSLog(@"calibData");
 
 			wiiCalibData.accX_zero = dp[7];
 			wiiCalibData.accY_zero = dp[8];
@@ -467,16 +480,17 @@ typedef unsigned char darr[];
 		}
 		
 		//Nunchuk calibration data
-		if (dataLength >= 14 && dp[5] == 0x04 && dp[6] == 0xA4){
-			//NSLog(@"calibData");
-			nunchukCalibData.accX_zero = dp[7];
-			nunchukCalibData.accY_zero = dp[8];
-			nunchukCalibData.accZ_zero = dp[9];
+		if (dataLength >= 14 && dp[5] == 0x00 && dp[6] == 0x20){
+			NSLog(@"nuncnuk calibData");
+			nunchukCalibData.accX_zero = (dp[7] ^ 0x17) + 0x17;
+			nunchukCalibData.accY_zero = (dp[8] ^ 0x17) + 0x17;
+			nunchukCalibData.accZ_zero = (dp[9] ^ 0x17) + 0x17;
 			
-			nunchukCalibData.accX_1g = dp[11];
-			nunchukCalibData.accY_1g = dp[12];
-			nunchukCalibData.accZ_1g = dp[13];
-		}
+			nunchukCalibData.accX_1g = (dp[10] ^ 0x17) + 0x17;
+			nunchukCalibData.accY_1g = (dp[11] ^ 0x17) + 0x17;
+			nunchukCalibData.accZ_1g = (dp[12] ^ 0x17) + 0x17;
+			
+		} 
 	}
 	
 	
@@ -491,16 +505,19 @@ typedef unsigned char darr[];
 		
 		if ((dp[4] & 0x02)){
 
-			if (!isExpansionPortUsed){
-				isExpansionPortUsed = YES;
+			if (!isExpansionPortAttached){
+				isExpansionPortAttached = YES;
 
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"WiiRemoteExpansionPortChangedNotification" object:self];
 			}
 		}else{
 
-			if (isExpansionPortUsed){
-				isExpansionPortUsed = NO;
+			if (isExpansionPortAttached){
+				isExpansionPortAttached = NO;
 
+				[self sendWiiNunchukButtonEvent:0xFFFF];		// reset button data;
+				
+				
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"WiiRemoteExpansionPortChangedNotification" object:self];
 			}
 		}
@@ -530,7 +547,7 @@ typedef unsigned char darr[];
 		}
 
 		//have to reset settings (vibration, motion, IR and so on...)
-		[self setIRSensorEnabled:isIRSensorEnabled];
+		//[self setIRSensorEnabled:isIRSensorEnabled];
 		
 	}
 	
@@ -538,29 +555,29 @@ typedef unsigned char darr[];
 		buttonData = ((short)dp[2] << 8) + dp[3];
 		[self sendWiiRemoteButtonEvent:buttonData];
 		//retrieve nunchuk data
-		if (dp[1] == 0x32 || dp[1] == 0x34 || dp[1] == 0x36 || dp[1] == 0x37 || dp[1] == 0x3D){
-			//NSLog(@"data is coming!!!");
-			/**
-			xStick = (dp[16] ^ 0x17) + 0x17;
-			yStick = (dp[17] ^ 0x17) + 0x17;
-			nAccX = (dp[18] ^ 0x17) + 0x17;
-			nAccY = (dp[19] ^ 0x17) + 0x17;
-			nAccZ = (dp[20] ^ 0x17) + 0x17;
-			nButtonData = (dp[21] ^ 0x17) + 0x17;
-			
-			if (isExpansionPortUsed){
-				NSLog(@"nunchuk buttonData");
-				[self sendWiiNunchukButtonEvent:nButtonData];
-				[_delegate accelerationChanged:WiiNunchukAccelerationSensor accX:nAccX accY:nAccY accZ:nAccZ];
-			}**/
+		//if (dp[1] == 0x32 || dp[1] == 0x34 || dp[1] == 0x35 || dp[1] == 0x36 || dp[1] == 0x37 || dp[1] == 0x3D){
+		if (dp[1] == 0x37){
+			xStick = (dp[17] ^ 0x17) + 0x17;
+			yStick = (dp[18] ^ 0x17) + 0x17;
+			nAccX = (dp[19] ^ 0x17) + 0x17;
+			nAccY = (dp[20] ^ 0x17) + 0x17;
+			nAccZ = (dp[21] ^ 0x17) + 0x17;
+			nButtonData =(dp[22] ^ 0x17) + 0x17;
+		}
+		
+		if (isExpansionPortEnabled && isExpansionPortAttached){
+			[self sendWiiNunchukButtonEvent:nButtonData];
+			[_delegate accelerationChanged:WiiNunchukAccelerationSensor accX:nAccX accY:nAccY accZ:nAccZ];
 		}
 		
 		
 		
 		if (dp[1] & 0x01) {
+			
 			accX = dp[4];
 			accY = dp[5];
 			accZ = dp[6];
+			
 			
 			[_delegate accelerationChanged:WiiRemoteAccelerationSensor accX:accX accY:accY accZ:accZ];
 			
@@ -784,7 +801,7 @@ typedef unsigned char darr[];
 }
 
 - (void)sendWiiNunchukButtonEvent:(UInt16)data{
-	if (data & kWiiNunchukCButton){
+	if (!(data & kWiiNunchukCButton)){
 		if (!buttonState[WiiNunchukCButton]){
 			buttonState[WiiNunchukCButton] = YES;
 			[_delegate buttonChanged:WiiNunchukCButton isPressed:buttonState[WiiNunchukCButton]];
@@ -796,7 +813,8 @@ typedef unsigned char darr[];
 		}
 	}
 	
-	if (data & kWiiNunchukZButton){
+	if (!(data & kWiiNunchukZButton)){
+
 		if (!buttonState[WiiNunchukZButton]){
 			buttonState[WiiNunchukZButton] = YES;
 			[_delegate buttonChanged:WiiNunchukZButton isPressed:buttonState[WiiNunchukZButton]];
@@ -815,8 +833,8 @@ typedef unsigned char darr[];
 	[self sendCommand:cmd length:2];
 }
 
-- (BOOL)isExpansionPortUsed{
-	return isExpansionPortUsed;
+- (BOOL)isExpansionPortAttached{
+	return isExpansionPortAttached;
 }
 
 - (BOOL)isButtonPressed:(WiiButtonType)type{
