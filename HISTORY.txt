@@ -1,3 +1,26 @@
+0.5 (2007.3.8)
+====================
+	This version is mainly maintained by Jasen Jacobsen. Thanks a lot!!
+	
+	o  New Features:
+		- supports Expansion Port (Nunchuk, Classic Controller)
+		- implements some useful methods
+			- (IOReturn)requestUpdates;
+			- (void) rawIRData: (IRData[4])irData wiiRemote(WiiRemote*)wiiRemote;
+			- (void) analogButtonChanged:(WiiButtonType)type amount:(unsigned)press wiiRemote(WiiRemote*)wiiRemote;
+	
+	o Changes:
+		- Delegates methods now report which Wiimote calls the methods.
+			- (void) irPointMovedX:(float)px Y:(float)py wiiRemote:(WiiRemote*)wiiRemote;
+			- (void) buttonChanged:(WiiButtonType)type isPressed:(BOOL)isPressed wiiRemote:(WiiRemote*)wiiRemote;
+			- (void) accelerationChanged:(WiiAccelerationSensorType)type accX:(unsigned char)accX accY:(unsigned char)accY accZ:(unsigned char)accZ wiiRemote:(WiiRemote*)wiiRemote;
+			- (void) joyStickChanged:(WiiJoyStickType)type tiltX:(unsigned char)tiltX tiltY:(unsigned char)tiltY wiiRemote:(WiiRemote*)wiiRemote;
+	
+	o Bug Fixes:
+		- PPC bugs might be fixed.
+		- decryption when a nunchuk plugged in might be fixed.
+
+
 0.4 (2006.12.26)
 ====================
 	o  New Features:
