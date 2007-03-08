@@ -17,8 +17,8 @@
 			- (void) joyStickChanged:(WiiJoyStickType)type tiltX:(unsigned char)tiltX tiltY:(unsigned char)tiltY wiiRemote:(WiiRemote*)wiiRemote;
 	
 	o Bug Fixes:
-		- PPC bugs might be fixed.
-		- decryption when a nunchuk plugged in might be fixed.
+		- #1623337 PPC bugs might be fixed.
+		- #1622395 decryption and dealing method when a nunchuk plugged in might be fixed.
 
 
 0.4 (2006.12.26)
