@@ -732,11 +732,14 @@ typedef unsigned char darr[];
 			cStickX1 = [self decrypt:dp[startByte]] & 0x3F;
 			cStickY1 = [self decrypt:dp[startByte +1]] & 0x3F;
 			
-			cStickX2 = ([self decrypt:dp[startByte]] & 0xC0) >> 3 + 
-						([self decrypt:dp[startByte +2]] & 0xC0) >> 5 + ([self decrypt:dp[startByte +3]] & 0x80) >> 7; 
+			//cStickX2 = ([self decrypt:dp[startByte]] & 0xC0) >> 3 + 
+						//([self decrypt:dp[startByte +2]] & 0xC0) >> 5 + ([self decrypt:dp[startByte +3]] & 0x80) >> 7;
+
+			cStickX2 = ([self decrypt:dp[startByte]] & 0xC0) >> 3;
+				([self decrypt:dp[startByte + 1]] & 0xC0) >> 5 + ([self decrypt:dp[startByte + 2]] & 0x80) >> 7;
 			cStickY2 =  [self decrypt:dp[startByte +2]] & 0x0F;
 			
-			cAnalogR =  [self decrypt:dp[startByte +3]] & 0x0F;
+			cAnalogR =  [self decrypt:dp[startByte +3]] & 0x1F;
 			cAnalogL = ( [self decrypt:dp[startByte +3]] & 0xE0) >> 5 + ( [self decrypt:dp[startByte +2]] & 0x60) >> 2;
 		}
 
