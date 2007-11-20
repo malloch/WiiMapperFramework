@@ -723,7 +723,7 @@ typedef enum {
 			break;
 			
 		case WiiClassicController:
-			cButtonData = (unsigned short)((WII_DECRYPT(dp[21]) << 8) + WII_DECRYPT(dp[22]));
+			cButtonData = (unsigned short)((WII_DECRYPT(dp[startByte+4]) << 8) + WII_DECRYPT(dp[startByte+5]));
 
 			cStickX1 = WII_DECRYPT(dp[startByte +0]) & 0x3F;
 			cStickY1 = WII_DECRYPT(dp[startByte +1]) & 0x3F;
