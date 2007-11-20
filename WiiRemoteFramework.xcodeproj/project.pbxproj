@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		47C19F250CF39C59007D77CC /* Mii.h in Headers */ = {isa = PBXBuildFile; fileRef = 47C19F240CF39C59007D77CC /* Mii.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		53144A870B30492D00757188 /* COPYRIGHT.txt in Resources */ = {isa = PBXBuildFile; fileRef = 53144A860B30492D00757188 /* COPYRIGHT.txt */; };
 		53144A8C0B30495700757188 /* HISTORY.txt in Resources */ = {isa = PBXBuildFile; fileRef = 53144A8B0B30495700757188 /* HISTORY.txt */; };
 		5351D4CC0B2D1D9E00F86B96 /* IOBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5351D4CB0B2D1D9E00F86B96 /* IOBluetooth.framework */; };
@@ -25,6 +26,7 @@
 		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1058C7B1FEA5585E11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		32DBCF5E0370ADEE00C91783 /* WiiRemoteFramework_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WiiRemoteFramework_Prefix.pch; sourceTree = "<group>"; };
+		47C19F240CF39C59007D77CC /* Mii.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Mii.h; sourceTree = SOURCE_ROOT; };
 		53144A860B30492D00757188 /* COPYRIGHT.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = COPYRIGHT.txt; sourceTree = "<group>"; };
 		53144A8B0B30495700757188 /* HISTORY.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = HISTORY.txt; sourceTree = "<group>"; };
 		5351D4CB0B2D1D9E00F86B96 /* IOBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOBluetooth.framework; path = /System/Library/Frameworks/IOBluetooth.framework; sourceTree = "<absolute>"; };
@@ -93,6 +95,7 @@
 		08FB77AEFE84172EC02AAC07 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				47C19F240CF39C59007D77CC /* Mii.h */,
 				5351D50B0B2D34DA00F86B96 /* WiiRemote.h */,
 				5351D50C0B2D34DA00F86B96 /* WiiRemote.m */,
 				5351D50D0B2D34DA00F86B96 /* WiiRemoteDiscovery.h */,
@@ -148,6 +151,7 @@
 				5351D50F0B2D34DA00F86B96 /* WiiRemote.h in Headers */,
 				5351D5110B2D34DA00F86B96 /* WiiRemoteDiscovery.h in Headers */,
 				53A1C0E70B9D85E800AEE7A2 /* WiiRemotePrivate.h in Headers */,
+				47C19F250CF39C59007D77CC /* Mii.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -179,10 +183,12 @@
 		0867D690FE84028FC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91B108733DA50010E9CD /* Build configuration list for PBXProject "WiiRemoteFramework" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 0867D691FE84028FC02AAC07 /* WiiRemoteFramework */;
 			productRefGroup = 034768DFFF38A50411DB9C8B /* Products */;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				8DC2EF4F0486A6940098B216 /* WiiRemoteFramework */,
 			);
@@ -271,6 +277,7 @@
 		1DEB91B208733DA50010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;

@@ -6,9 +6,24 @@
 //  Copyright 2006 KIMURA Hiroaki. All rights reserved.
 //
 
+#import "Mii.h"
+
 #import <Cocoa/Cocoa.h>
 #import <IOBluetooth/objc/IOBluetoothDevice.h>
 #import <IOBluetooth/objc/IOBluetoothL2CAPChannel.h>
+
+// useful logging macros
+#ifndef NSLogDebug
+#if DEBUG
+#	define NSLogDebug(log, ...) NSLog(log, ##__VA_ARGS__)
+#	define LogIOReturn(result) if (result != kIOReturnSuccess) { printf ("IOReturn error (%s [%d]): system 0x%x, sub 0x%x, error 0x%x\n", __FILE__, __LINE__, err_get_system (result), err_get_sub (result), err_get_code (result)); }
+#else
+#	define NSLogDebug(log, ...)
+#	define LogIOReturn(result)
+#endif
+#endif
+
+extern NSString * WiiRemoteExpansionPortChangedNotification;
 
 
 typedef unsigned char WiiIRModeType;
@@ -23,16 +38,15 @@ typedef struct {
 } IRData;
 
 typedef struct {
-	unsigned char accX_zero, accY_zero, accZ_zero, accX_1g, accY_1g, accZ_1g; 
+	unsigned short accX_zero, accY_zero, accZ_zero, accX_1g, accY_1g, accZ_1g; 
 } WiiAccCalibData;
 
 typedef struct {
-	unsigned char x_min, x_max, x_center, y_min, y_max, y_center; 
+	unsigned short x_min, x_max, x_center, y_min, y_max, y_center; 
 } WiiJoyStickCalibData;
 
 
-typedef UInt16 WiiButtonType;
-enum {
+typedef enum {
 	WiiRemoteAButton,
 	WiiRemoteBButton,
 	WiiRemoteOneButton,
@@ -63,119 +77,141 @@ enum {
 	WiiClassicControllerMinusButton,
 	WiiClassicControllerHomeButton,
 	WiiClassicControllerPlusButton
-};
+} WiiButtonType;
 
+unsigned char mii_data_buf[WIIMOTE_MII_DATA_BYTES_PER_SLOT + 16];
+unsigned short mii_data_offset;
 
-typedef UInt16 WiiExpansionPortType;
-enum{
+typedef enum {
 	WiiExpNotAttached,
 	WiiNunchuk,
 	WiiClassicController
-};
+}  WiiExpansionPortType;
 
-typedef UInt16 WiiAccelerationSensorType;
-enum{
+typedef enum {
 	WiiRemoteAccelerationSensor,
 	WiiNunchukAccelerationSensor
-};
+} WiiAccelerationSensorType;
 
 
-typedef UInt16 WiiJoyStickType;
-enum{
-	WiiNunchukJoyStick,
-	WiiClassicControllerLeftJoyStick,	//not available
-	WiiClassicControllerRightJoyStick	//not available
-};
+typedef enum {
+	WiiNunchukJoyStick					= 0,
+	WiiClassicControllerLeftJoyStick	= 1,
+	WiiClassicControllerRightJoyStick	= 2
+} WiiJoyStickType;
 
-@interface WiiRemote : NSObject {
+@interface WiiRemote : NSObject
+{
+#ifdef DEBUG
+	BOOL _dump;
+#endif
 	
-	IOBluetoothDevice* wiiDevice;
-	IOBluetoothL2CAPChannel *ichan;
-	IOBluetoothL2CAPChannel *cchan;
-	
+	BOOL _opened;
+	BOOL _shouldUpdateReportMode;
+	BOOL _shouldReadExpansionCalibration;
+	BOOL _isMotionSensorEnabled;
+	BOOL _isIRSensorEnabled;
+	BOOL _isVibrationEnabled;
+	BOOL _isExpansionPortEnabled;
+	BOOL _isExpansionPortAttached;
+	BOOL _isLED1Illuminated;
+	BOOL _isLED2Illuminated;
+	BOOL _isLED3Illuminated;
+	BOOL _isLED4Illuminated;
+
+	IOBluetoothDevice * _wiiDevice;
+	IOBluetoothL2CAPChannel * _ichan;
+	IOBluetoothL2CAPChannel * _cchan;
+
 	id _delegate;
-	
-	
-	unsigned char accX;
-	unsigned char accY;
-	unsigned char accZ;
-	unsigned short buttonData;
-	
-	float lowZ, lowX;
+
+	float _lowZ, _lowX;
 	int orientation;
 	int leftPoint; // is point 0 or 1 on the left. -1 when not tracking.
-	
-	
+
 	WiiExpansionPortType expType;
 	WiiAccCalibData wiiCalibData, nunchukCalibData;
 	WiiJoyStickCalibData nunchukJoyStickCalibData;
 	WiiIRModeType wiiIRMode;
 	IRData	irData[4];
-	double batteryLevel;
-	double warningBatteryLevel;
+	double _batteryLevel;
+	double _warningBatteryLevel;
 	
-	BOOL readingRegister;
-	BOOL isMotionSensorEnabled, isIRSensorEnabled, isVibrationEnabled, isExpansionPortEnabled;
-	BOOL isExpansionPortAttached, initExpPort;
-	BOOL isLED1Illuminated, isLED2Illuminated, isLED3Illuminated, isLED4Illuminated;
-	NSTimer* statusTimer;
-	IOBluetoothUserNotification *disconnectNotification;
+	NSTimer * statusTimer;
+	IOBluetoothUserNotification * disconnectNotification;
+
 	BOOL buttonState[28];
 	
-	
+	//wiimote
+	unsigned short accX;
+	unsigned short accY;
+	unsigned short accZ;
+	unsigned short buttonData;	
 	
 	//nunchuk
-	unsigned char nStickX;
-	unsigned char nStickY;
-	unsigned char nAccX;
-	unsigned char nAccY;
-	unsigned char nAccZ;
-	unsigned char nButtonData;
+	unsigned short nStickX;
+	unsigned short nStickY;
+	unsigned short nAccX;
+	unsigned short nAccY;
+	unsigned short nAccZ;
+	unsigned short nButtonData;
 	
-	//classic controller
-	unsigned char cButtonData;
-	unsigned char cStickX1;
-	unsigned char cStickY1;
-	unsigned char cStickX2;
-	unsigned char cStickY2;
-	unsigned char cAnalogL;
-	unsigned char cAnalogR;
-	
+	// classic controller
+	unsigned short cButtonData;
+	unsigned short cStickX1;
+	unsigned short cStickY1;
+	unsigned short cStickX2;
+	unsigned short cStickY2;
+	unsigned short cAnalogL;
+	unsigned short cAnalogR;
 } 
 - (NSString*) address;
-- (void)setDelegate:(id)delegate;
-- (double)batteryLevel;
+- (void) setDelegate:(id) delegate;
+- (double) batteryLevel;
 
-- (WiiExpansionPortType)expansionPortType;
-- (BOOL)isExpansionPortAttached;
-- (BOOL)available;
-- (BOOL)isButtonPressed:(WiiButtonType)type;
-- (WiiJoyStickCalibData)joyStickCalibData:(WiiJoyStickType)type;
-- (WiiAccCalibData)accCalibData:(WiiAccelerationSensorType)type;
+- (WiiExpansionPortType) expansionPortType;
+- (BOOL) isExpansionPortAttached;
+- (BOOL) available;
+- (BOOL) isButtonPressed:(WiiButtonType) type;
+- (WiiJoyStickCalibData) joyStickCalibData:(WiiJoyStickType) type;
+- (WiiAccCalibData) accCalibData:(WiiAccelerationSensorType) type;
 
-- (IOReturn)connectTo:(IOBluetoothDevice*)device;
-- (IOReturn)closeConnection;
-- (IOReturn)requestUpdates;
-- (IOReturn)setIRSensorEnabled:(BOOL)enabled;
-- (IOReturn)setForceFeedbackEnabled:(BOOL)enabled;
-- (IOReturn)setMotionSensorEnabled:(BOOL)enabled;
-- (IOReturn)setExpansionPortEnabled:(BOOL)enabled;
-- (IOReturn)setLEDEnabled1:(BOOL)enabled1 enabled2:(BOOL)enabled2 enabled3:(BOOL)enabled3 enabled4:(BOOL)enabled4;
+- (IOReturn) connectTo:(IOBluetoothDevice*) device;
+- (IOReturn) closeConnection;
+- (IOReturn) getCurrentStatus:(NSTimer*) timer;
+- (IOReturn) writeData:(const unsigned char*) data at:(unsigned long) address length:(size_t) length;
+- (IOReturn) readData:(unsigned long) address length:(unsigned short) length;
+- (IOReturn) sendCommand:(const unsigned char*) data length:(size_t) length;
+
+- (void) updateReportMode;
+- (IOReturn) doUpdateReportMode;
+- (void) setIRSensorEnabled:(BOOL) enabled;
+- (void) setForceFeedbackEnabled:(BOOL) enabled;
+- (void) setMotionSensorEnabled:(BOOL) enabled;
+- (void) setExpansionPortEnabled:(BOOL) enabled;
+- (void) setLEDEnabled1:(BOOL) enabled1 enabled2:(BOOL) enabled2 enabled3:(BOOL) enabled3 enabled4:(BOOL) enabled4;
+
+- (IOReturn) getMii:(unsigned int) slot;
+
+- (void) sendWiiRemoteButtonEvent:(UInt16) data;
+- (void) sendWiiNunchukButtonEvent:(UInt16) data;
+- (void) sendWiiClassicControllerButtonEvent:(UInt16) data;
 
 @end
 
-@interface NSObject( WiiRemoteDelegate )
+@interface NSObject (WiiRemoteDelegate)
 
-- (void) irPointMovedX:(float)px Y:(float)py wiiRemote:(WiiRemote*)wiiRemote;
-- (void) rawIRData: (IRData[4])irData wiiRemote:(WiiRemote*)wiiRemote;
-- (void) buttonChanged:(WiiButtonType)type isPressed:(BOOL)isPressed wiiRemote:(WiiRemote*)wiiRemote;
-- (void) accelerationChanged:(WiiAccelerationSensorType)type accX:(unsigned char)accX accY:(unsigned char)accY accZ:(unsigned char)accZ wiiRemote:(WiiRemote*)wiiRemote;
-- (void) joyStickChanged:(WiiJoyStickType)type tiltX:(unsigned char)tiltX tiltY:(unsigned char)tiltY wiiRemote:(WiiRemote*)wiiRemote;
-- (void) analogButtonChanged:(WiiButtonType)type amount:(unsigned)press wiiRemote:(WiiRemote*)wiiRemote;
-- (void) wiiRemoteDisconnected:(IOBluetoothDevice*)device;
+- (void) wiimoteWillSendData;
+- (void) wiimoteDidSendData;
 
-
-//- (void) dataChanged:(unsigned short)buttonData accX:(unsigned char)accX accY:(unsigned char)accY accZ:(unsigned char)accZ mouseX:(float)mx mouseY:(float)my;
-
+- (void) irPointMovedX:(float) px Y:(float) py;
+- (void) rawIRData: (IRData[4]) irData;
+- (void) buttonChanged:(WiiButtonType) type isPressed:(BOOL) isPressed;
+- (void) accelerationChanged:(WiiAccelerationSensorType) type accX:(unsigned short) accX accY:(unsigned short) accY accZ:(unsigned short) accZ;
+- (void) joyStickChanged:(WiiJoyStickType) type tiltX:(unsigned short) tiltX tiltY:(unsigned short) tiltY;
+- (void) analogButtonChanged:(WiiButtonType) type amount:(unsigned short) press;
+- (void) batteryLevelChanged:(double) level;
+- (void) wiiRemoteDisconnected:(IOBluetoothDevice*) device;
+- (void) gotMiiData: (Mii*) mii_data_buf at: (int) slot;
 
 @end

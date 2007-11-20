@@ -7,6 +7,9 @@
  *
  */
 
+// this type is used a lot (data array):
+typedef unsigned char darr[];
+
 typedef UInt16 WiiButtonBitMask;
 enum {
 	kWiiRemoteTwoButton					= 0x0001,
@@ -47,6 +50,8 @@ enum {
 
 
 @interface WiiRemote (Private)
+- (IOBluetoothL2CAPChannel *) openL2CAPChannelWithPSM:(BluetoothL2CAPPSM) psm delegate:(id) delegate;
+
 - (IOReturn)writeData:(const unsigned char*)data at:(unsigned long)address length:(size_t)length;
 - (IOReturn)readData:(unsigned long)address length:(unsigned short)length;
 - (IOReturn)sendCommand:(const unsigned char*)data length:(size_t)length;
