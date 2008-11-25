@@ -17,6 +17,9 @@ static WiiAccCalibData kWiiNullAccCalibData = {0, 0, 0, 0, 0, 0};
 
 #define WII_DECRYPT(data) (((data ^ 0x17) + 0x17) & 0xFF)
 
+#define BIT_2x8_16(dp1, dp2) ((dp1 << 8) | dp2) 
+#define PRINT_BB_GRID(grid, value) printf("===Grid %ikg===\nTR %i\nBR %i\nTL %i\nTR %i\n", value, grid.tr, grid.br, grid.tl, grid.tr)
+
 #define WIR_HALFRANGE 256.0
 #define WIR_INTERVAL  10.0
 
@@ -76,6 +79,11 @@ typedef enum {
 	NSLogDebug (@"Wii instantiated");
 
 	if (self != nil) {
+		
+#ifdef DEBUG
+		/* Allow full protocol logging */
+		_dump = TRUE;
+#endif
 		accX = 0x10;
 		accY = 0x10;
 		accZ = 0x10;
@@ -87,6 +95,7 @@ typedef enum {
 		_delegate = nil;
 		_shouldUpdateReportMode = NO;
 		_shouldReadExpansionCalibration = NO;
+		_shouldSetInitialConfiguration = YES; //Used as dirty hack to make sure the Initial configuration is set _after_ device has be indentified
 		_wiiDevice = nil;
 		
 		_opened = NO;
@@ -101,7 +110,7 @@ typedef enum {
 		_isExpansionPortAttached = NO;
 		
 		wiiIRMode = kWiiIRModeExtended;
-		expType = WiiExpNotAttached;
+		expType = WiiExpUknown;
 	}
 	return self;
 }
@@ -143,22 +152,21 @@ typedef enum {
 	if (!_ichan)
 		return kIOReturnNotOpen;
 	
+	NSLogDebug(@"Allow bluetooth stack to 'settle', wait few milliseconds");
 	usleep (20000);
 	
-//            statusTimer = [[NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(getCurrentStatus:) userInfo:nil repeats:YES] retain];
+    //statusTimer = [[NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(getCurrentStatus:) userInfo:nil repeats:YES] retain];
+	
+	//Initial polling - find out of status of current device
 	ret = [self getCurrentStatus:nil];	
+    
+	/* Allow recoginition of device, BB for example is kind of slow in startup ;-) */ 
+	usleep (20000);
+	 
+	/* Moved initial intitalization after device recognising scheme, as Balanance Board dieds while polling the IRSensor
+	 * Find a more clever way to detect we are actually talking to the Wii Device 
+	*/
 
-	if (ret == kIOReturnSuccess)
-		ret = [self readData:0x0020 length:7]; // Get Accelerometer calibration data
-
-	if (ret == kIOReturnSuccess) {
-		[self setMotionSensorEnabled:NO];
-		[self setIRSensorEnabled:NO];
-		[self setForceFeedbackEnabled:NO];
-		[self setLEDEnabled1:NO enabled2:NO enabled3:NO enabled4:NO];
-		[self updateReportMode];
-//		ret = [self doUpdateReportMode];
-	}
 	
 	if ((ret == kIOReturnSuccess) && [self available]) {
 		disconnectNotification = [_wiiDevice registerForDisconnectNotification:self selector:@selector(disconnected:fromDevice:)];
@@ -190,18 +198,23 @@ typedef enum {
 	memcpy (buf+1, data, length);
 	if (buf[1] == 0x16) length = 23;
 	else				length++;
-
-//	printf ("send%3d:", length);
-//	for(i=0 ; i<length ; i++) {
-//		printf(" %02X", buf[i]);
-//	}
-//	printf("\n");
 	
+#ifdef DEBUG	
+	if (_dump) {
+		int i;
+		printf ("channel:%i - send%3d:", _cchan, length);
+		for(i=0 ; i<length ; i++) {
+			printf(" %02X", buf[i]);
+		}
+		printf("\n");
+	}
+#endif	
+
 	IOReturn ret = kIOReturnSuccess;
 	
+	int i;
 	// cam: i think there is no need to do the loop many times in order to see there is an error
 	// if there's an error it must be managed right away
-	int i;
 	for (i=0; i<10 ; i++) {
 		ret = [_cchan writeSync:buf length:length];		
 		if (ret != kIOReturnSuccess) {
@@ -318,7 +331,7 @@ typedef enum {
 		wiiIRMode = _isExpansionPortEnabled ? kWiiIRModeBasic : kWiiIRModeExtended;
 		
 		// Set IR Mode
-		//		NSLogDebug (@"Setting IR Mode to finish initialization.");
+		NSLogDebug (@"Setting IR Mode to finish initialization.");
 		// I don't think it should be here ...		
 		[self writeData:(darr){ wiiIRMode } at:0x04B00033 length:1];
 		usleep(10000);
@@ -350,7 +363,12 @@ typedef enum {
 		_isExpansionPortEnabled = enabled;		
 		// get expansion device calibration data
 		_shouldReadExpansionCalibration = YES;
-		ret = [self readData:0x04A40020 length: 16];
+		/* Calibration of WiiRemote takes up only 16 bytes, BalanceBoard however uses 32 bytes
+		 * http://wiibrew.org/wiki/Wii_Balance_Board#Calibration_Data as second set of bytes on WiiRemote 
+		 * are zero http://wiibrew.org/wiki/Wiimote#Extension_Controller no harm of fetching the full 32 bytes :-)
+		 */
+		NSLogDebug (@"Requesting expansion calibration data");
+		ret = [self readData:0x04A40020 length: 32];
 		LogIOReturn (ret);
 	}
 
@@ -506,12 +524,35 @@ typedef enum {
 	return ret;
 }
 
+- (void) setInitialConfiguration
+{
+	if (_shouldSetInitialConfiguration) {
+		if (expType != WiiBalanceBoard) {
+			NSLogDebug(@"Setting default wiimote values");
+				
+			IOReturn ret = [self readData:0x0020 length:7]; // Get Accelerometer calibration data
+				
+			if (ret == kIOReturnSuccess) {
+				[self setMotionSensorEnabled:YES];
+				[self setIRSensorEnabled:NO];
+				[self setForceFeedbackEnabled:NO];
+				[self setLEDEnabled1:YES enabled2:NO enabled3:NO enabled4:NO];
+				[self updateReportMode];
+				//ret = [self doUpdateReportMode];
+			}
+		}
+		
+		_shouldSetInitialConfiguration = NO;
+	}
+}
+
+
 - (void) handleWriteResponse:(unsigned char *) dp length:(size_t) dataLength
 {
 	NSLogDebug (@"Write data response: %00x %00x %00x %00x", dp[2], dp[3], dp[4], dp[5]);
 }
 
-	/**
+	/** Also see: http://wiibrew.org/wiki/Wiimote#Reading_and_Writing 
 	 * Handle report 0x21 (Read Data) from wiimote.
 	 * dp[0] = Bluetooth header
 	 * dp[1] = (0x21) Report/Channel ID
@@ -569,12 +610,26 @@ typedef enum {
 					[[NSNotificationCenter defaultCenter] postNotificationName:WiiRemoteExpansionPortChangedNotification object:self];					
 				}
 				break;
+			case 0x2a:
+				NSLogDebug (@"Balance Board connected.");
+				if (expType != WiiBalanceBoard) {
+					expType = WiiBalanceBoard;
+					[[NSNotificationCenter defaultCenter] postNotificationName:WiiRemoteExpansionPortChangedNotification object:self];
+				}
+				break;
+			case 0x2e:
+				NSLogDebug(@"No Expansion detected.");
+				if (expType != WiiExpNotAttached) {
+					expType = WiiExpNotAttached;
+					[[NSNotificationCenter defaultCenter] postNotificationName:WiiRemoteExpansionPortChangedNotification object:self];
+				}
+				break;
 			default:
 				NSLogDebug (@"Unknown device connected (0x%x). ", WII_DECRYPT(dp[21]));
-				expType = WiiExpNotAttached;
+				expType = WiiExpUknown;
 				break;
 		}
-
+		[self setInitialConfiguration];
 		return;
 	}
 		
@@ -614,11 +669,43 @@ typedef enum {
 			
 			_shouldReadExpansionCalibration = NO;
 			return;
+		} else if (expType == WiiBalanceBoard) {
+			NSLogDebug (@"Read Balance Board calibration");
+			/* Format found at http://wiibrew.org/wiki/Wii_Balance_Board#Calibration_Data
+			 * in 24 bytes from 0xa40024 to 0xa4003a
+			 */
+			/* First 4 values 0xa40020 - 0xa40023 unknown */
+			balanceBoardCalibData.kg0.tr = BIT_2x8_16(dp[11], dp[12]);
+			balanceBoardCalibData.kg0.br = BIT_2x8_16(dp[13], dp[14]);
+			balanceBoardCalibData.kg0.tl = BIT_2x8_16(dp[15], dp[16]);
+			balanceBoardCalibData.kg0.bl = BIT_2x8_16(dp[17], dp[18]);
+			balanceBoardCalibData.kg17.tr = BIT_2x8_16(dp[19], dp[20]);
+			balanceBoardCalibData.kg17.br = BIT_2x8_16(dp[21], dp[22]);
+			
+			/* Not yet fully configured, so keep the _shouldReadExpansionCalibration set */
+			return;
 		} else if (expType == WiiClassicController) {
 			//classic controller calibration data (probably)
 		}
+	} else if (_shouldReadExpansionCalibration && (addr == 0x0030)) {
+		if (expType == WiiBalanceBoard) {
+			balanceBoardCalibData.kg17.tl = BIT_2x8_16(dp[7], dp[8]);
+			balanceBoardCalibData.kg17.bl = BIT_2x8_16(dp[9], dp[10]);
+			
+			balanceBoardCalibData.kg34.tr = BIT_2x8_16(dp[11], dp[12]);
+			balanceBoardCalibData.kg34.br = BIT_2x8_16(dp[13], dp[14]);
+			balanceBoardCalibData.kg34.tl = BIT_2x8_16(dp[15], dp[16]);
+			balanceBoardCalibData.kg34.bl = BIT_2x8_16(dp[17], dp[18]);
+			/* Usage of last 4 values also unkown */
+			
+			PRINT_BB_GRID(balanceBoardCalibData.kg0, 0);
+			PRINT_BB_GRID(balanceBoardCalibData.kg17, 17);
+			PRINT_BB_GRID(balanceBoardCalibData.kg34, 34);
+			
+			/* All data read, as 0x0020 data is presented to us already */ 
+			_shouldReadExpansionCalibration = NO;
+		}
 	} // expansion device calibration data
-	
 	// wiimote buttons
 	buttonData = ((short)dp[2] << 8) + dp[3];
 	[self sendWiiRemoteButtonEvent:buttonData];
@@ -627,7 +714,7 @@ typedef enum {
 - (void) handleStatusReport:(unsigned char *) dp length:(size_t) dataLength
 {
 	NSLogDebug (@"Status Report (0x%x)", dp[4]);
-		
+   /* sample: A1 20 00 00 02 00 00 AB */
 	double level = (double) dp[7];
 	level /= (double) 0xC0; // C0 = fully charged.
 
@@ -642,9 +729,12 @@ typedef enum {
 		
 	IOReturn ret = kIOReturnSuccess;
 	if (dp[4] & 0x02) { //some device attached to Wiimote
-		NSLogDebug (@"Device Attached");
+		NSLogDebug (@"Expantion device Attached");
 		if (!_isExpansionPortAttached) {
-			ret = [self writeData:(darr){0x00} at:(unsigned long)0x04A40040 length:1]; // Initialize the device
+			/* Initialize the device, reason unknown see for example
+			 * http://www.wiili.org/index.php/Wiimote/Extension_Controllers/Nunchuk#Communication 
+			 */
+			ret = [self writeData:(darr){0x00} at:(unsigned long)0x04A40040 length:1];
 			usleep (10000);
 
 			if (ret != kIOReturnSuccess) {
@@ -653,6 +743,7 @@ typedef enum {
 				return;
 			}
 
+			/* Purpose unkown, but only succesfull when controller attached */
 			IOReturn ret = [self readData:0x04A400F0 length:16]; // read expansion device type
 			LogIOReturn (ret);
 			
@@ -674,6 +765,8 @@ typedef enum {
 			[[NSNotificationCenter defaultCenter] postNotificationName:WiiRemoteExpansionPortChangedNotification object:self];
 		}
 	}
+	
+	[self setInitialConfiguration];
 
 	_isLED1Illuminated = (dp[4] & 0x10);
 	_isLED2Illuminated = (dp[4] & 0x20);
@@ -681,10 +774,30 @@ typedef enum {
 	_isLED4Illuminated = (dp[4] & 0x80);
 } // handleStatusReport
 
+- (unsigned short) bbPressure2kg:(unsigned short) value pkg0:(unsigned short) pkg0 pkg17:(unsigned short) pkg17 pkg34:(unsigned short) pkg34
+{
+	/* Convert to Kilograms
+	 * 0kg=0; value=20; 17kg=100
+	 * eachKG = high - low / 17
+	 * startKG = 0
+	 * result = startKG + (value - low) /result;
+	 */
+	if (value < pkg0) {
+		/* Lower than 0kg should never happen..., but make it 0 anyway */
+		return 0;
+	} else if (value < pkg17) {
+		return  0 + (value - pkg0) / ((pkg17 - pkg0) / 17);
+	} else if (value < pkg34) {
+		return  17 + (value - pkg17) / ((pkg34 - pkg17) / 17);
+	} else {
+		return  34 + (value - pkg34) / ((pkg34 - pkg0) / 34);
+	}
+}
+
 - (void) handleExtensionData:(unsigned char *) dp length:(size_t) dataLength
 {
 	unsigned char startByte;
-	
+		
 	switch (dp[1]) {
 		case 0x34 :
 			startByte = 4;
@@ -749,6 +862,43 @@ typedef enum {
 				[_delegate analogButtonChanged:WiiClassicControllerLButton amount:cAnalogL];
 				[_delegate analogButtonChanged:WiiClassicControllerRButton amount:cAnalogR];
 			}			
+
+			break;
+		case WiiBalanceBoard:
+			/* http://www.wiili.org/index.php/Wii_Balance_Board_PC_Drivers
+			 * 34 00 00 AA AA BB BB CC CC DD DD? ? ? ? EE.. 
+			 * AA AA right-top (L)
+             * BB BB right-bottom (S) 
+             * CC CC left-top (S)
+			 * DD DD left-bottom (L)
+             *
+			 *  (AA AA... are BigEndian)
+             *
+		     * It seems that some value is also in EE, but the usage is unclear. There are four sensors. 
+			 * It seems that they are placed at each of the 4 feet of the balance board itself.
+             *
+             *  +--------------------+
+			 *	| C0C1 (S)  A0A1 (L) | bPressureTL | bPressureTR // b(alance board) Pressure (sensor) [T(top)|B(bottom)][L(eft)|R(ight)] 
+			 *	| D0D1 (L)  B0B1 (S) | bPressureBL | bPressureBR
+			 *	|        POWER       |
+			 *	+--------------------+
+			 */
+			
+			bPressure.tr = BIT_2x8_16(dp[startByte +0], dp[startByte +1]);
+			bPressure.br = BIT_2x8_16(dp[startByte +2], dp[startByte +3]);
+			bPressure.tl = BIT_2x8_16(dp[startByte +4], dp[startByte +5]);
+			bPressure.bl = BIT_2x8_16(dp[startByte +6], dp[startByte +7]);
+
+			bKg.tr = [self bbPressure2kg:bPressure.tr pkg0:balanceBoardCalibData.kg0.tr pkg17:balanceBoardCalibData.kg17.tr pkg34:balanceBoardCalibData.kg34.tr];
+			bKg.br = [self bbPressure2kg:bPressure.br pkg0:balanceBoardCalibData.kg0.br pkg17:balanceBoardCalibData.kg17.br pkg34:balanceBoardCalibData.kg34.br];
+			bKg.tl = [self bbPressure2kg:bPressure.tl pkg0:balanceBoardCalibData.kg0.tl pkg17:balanceBoardCalibData.kg17.tl pkg34:balanceBoardCalibData.kg34.tl];
+			bKg.bl = [self bbPressure2kg:bPressure.bl pkg0:balanceBoardCalibData.kg0.bl pkg17:balanceBoardCalibData.kg17.bl pkg34:balanceBoardCalibData.kg34.bl];
+
+			if ([_delegate respondsToSelector:@selector (pressureChanged:pressureTR:pressureBR:pressureTL:pressureBL:)])
+				/* Don't use raw values, but use KG for the time beeing */
+				//[_delegate pressureChanged:WiiBalanceBoardPressureSensor pressureTR:bPressure.tr pressureBR:bPressure.br pressureTL:bPressure.tl pressureBL:bPressure.bl];
+				[_delegate pressureChanged:WiiBalanceBoardPressureSensor pressureTR:bKg.tr pressureBR:bKg.br pressureTL:bKg.tl pressureBL:bKg.bl];
+
 
 			break;
 	}
@@ -876,6 +1026,11 @@ typedef enum {
 		case 0x37:
 			[self handleExtensionData:dp length:dataLength];
 			break;
+	}
+	
+	/* Balance Board does not have any motion or IR sensors */
+	if (expType == WiiBalanceBoard) {
+		return;
 	}
 	
 	// report contains IR data
@@ -1386,11 +1541,17 @@ typedef enum {
 	}
 
 	unsigned char * dp = (unsigned char *) dataPointer;
-	
-/*	if (_dump) {
-		NSLogDebug (@"Dumping: 0x%x", dp[1]);
-		Debugger();
-	}*/
+
+#ifdef DEBUG	
+	if (_dump) {
+		int i;
+		printf ("channel:%i - ack%3d:", [l2capChannel getPSM], dataLength);
+		for(i=0 ; i<dataLength ; i++) {
+			printf(" %02X", dp[i]);
+		}
+		printf("\n");
+	}
+#endif
 
 	if ([_delegate respondsToSelector:@selector (wiimoteWillSendData)])
 		[_delegate wiimoteWillSendData];
