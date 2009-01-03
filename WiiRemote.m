@@ -906,6 +906,8 @@ typedef enum {
 
 - (void) handleIRData:(unsigned char *) dp length:(size_t) dataLength
 {
+	
+	/* Set all IR data to array, based on input format */
 //	NSLog(@"Handling IR Data for 0x%00x", dp[1]);	
 	int i = 0;
 	if (dp[1] == 0x33) { // 12 IR bytes
@@ -938,6 +940,7 @@ typedef enum {
 //		  irData[2].x, irData[2].y, irData[2].s,
 //		  irData[3].x, irData[3].y, irData[3].s);
 
+	/* Determine 2 out of 4 points to be used for position calculations  */
 	int p1 = -1;
 	int p2 = -1;
 	// we should modify this loop to take the points with the lowest s (the brightest ones)
@@ -956,7 +959,9 @@ typedef enum {
 //	NSLogDebug (@"p1=%i ; p2=%i", p1, p2);
 
 	double ox, oy;
+	/* Verify wether there exists two points allowing us to do proper tracking */
 	if ((p1 > -1) && (p2 > -1)) {
+		/* Determine left and right point??? */
 		int l = leftPoint;
 		if (leftPoint == -1) {
 			switch (orientation) {
@@ -968,19 +973,24 @@ typedef enum {
 
 			leftPoint = l;
 		}
-
+		
 		int r = 1-l;
-
+		
+		/* Calculate space between point L,R  */
 		double dx = irData[r].x - irData[l].x;
 		double dy = irData[r].y - irData[l].y;
+		/* http://en.wikipedia.org/wiki/Atan2#The_hypot_function */
 		double d = hypot (dx, dy);
 
+		/* Normalize distances */
 		dx /= d;
 		dy /= d;
 
+		/* RvdZ: What is happening over here? */
 		double cx = (irData[l].x + irData[r].x)/kWiiIRPixelsWidth - 1;
 		double cy = (irData[l].y + irData[r].y)/kWiiIRPixelsHeight - 1;
-
+		
+		/* RvdZ: What is happening over here? */
 		ox = -dy*cy-dx*cx;
 		oy = -dx*cy+dy*cx;
 
