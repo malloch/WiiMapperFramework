@@ -160,8 +160,12 @@ typedef enum {
 	//Initial polling - find out of status of current device
 	ret = [self getCurrentStatus:nil];	
     
-	/* Allow recoginition of device, BB for example is kind of slow in startup ;-) */ 
-	usleep (20000);
+	/* Allow recoginition of device, BB for example is kind of slow in startup ;-) 
+	 * Value determined by experimenting:
+	 * *20000 is causing timeouts
+	 * *1000 causes WiiBalanceBoard not be be detected
+	 */ 
+	usleep (10000);
 	 
 	/* Moved initial intitalization after device recognising scheme, as Balanance Board dieds while polling the IRSensor
 	 * Find a more clever way to detect we are actually talking to the Wii Device 
