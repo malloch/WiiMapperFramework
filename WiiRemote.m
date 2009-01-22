@@ -902,8 +902,8 @@ typedef enum {
 				/* Don't use raw values, but use KG for the time beeing */
 				//[_delegate pressureChanged:WiiBalanceBoardPressureSensor pressureTR:bPressure.tr pressureBR:bPressure.br pressureTL:bPressure.tl pressureBL:bPressure.bl];
 				[_delegate pressureChanged:WiiBalanceBoardPressureSensor pressureTR:bKg.tr pressureBR:bKg.br pressureTL:bKg.tl pressureBL:bKg.bl];
-
-
+			if ([_delegate respondsToSelector:@selector (rawPressureChanged:)])
+				[_delegate rawPressureChanged:bPressure];
 			break;
 	}
 } // handleExtensionData
