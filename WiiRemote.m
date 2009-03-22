@@ -904,6 +904,8 @@ typedef enum {
 				[_delegate pressureChanged:WiiBalanceBoardPressureSensor pressureTR:bKg.tr pressureBR:bKg.br pressureTL:bKg.tl pressureBL:bKg.bl];
 			if ([_delegate respondsToSelector:@selector (rawPressureChanged:)])
 				[_delegate rawPressureChanged:bPressure];
+			if ([_delegate respondsToSelector:@selector (allPressureChanged:bbData:bbDataInKg:)])
+				[_delegate allPressureChanged:WiiBalanceBoardPressureSensor bbData:bPressure bbDataInKg:bKg];
 			break;
 	}
 } // handleExtensionData

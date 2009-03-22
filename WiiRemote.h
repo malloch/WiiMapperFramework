@@ -240,4 +240,5 @@ typedef enum {
 - (void) wiiRemoteDisconnected:(IOBluetoothDevice*) device;
 - (void) gotMiiData: (Mii*) mii_data_buf at: (int) slot;
 - (void) rawPressureChanged:(WiiBalanceBoardGrid) bbData;
+- (void) allPressureChanged:(WiiPressureSensorType) type bbData:(WiiBalanceBoardGrid) bbData bbDataInKg:(WiiBalanceBoardGrid) bbDataInKg;
 @end
