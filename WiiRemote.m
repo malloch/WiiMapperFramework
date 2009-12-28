@@ -206,7 +206,7 @@ typedef enum {
 #ifdef DEBUG	
 	if (_dump) {
 		int i;
-		printf ("channel:%i - send%3d:", _cchan, length);
+		printf ("channel:%i - send%3u:", [_cchan getPSM], (unsigned int)length);
 		for(i=0 ; i<length ; i++) {
 			printf(" %02X", buf[i]);
 		}
@@ -1561,7 +1561,7 @@ typedef enum {
 #ifdef DEBUG	
 	if (_dump) {
 		int i;
-		printf ("channel:%i - ack%3d:", [l2capChannel getPSM], dataLength);
+		printf ("channel:%i - ack%3u:", [l2capChannel getPSM], (unsigned int)dataLength);
 		for(i=0 ; i<dataLength ; i++) {
 			printf(" %02X", dp[i]);
 		}
