@@ -17,8 +17,8 @@ static WiiAccCalibData kWiiNullAccCalibData = {0, 0, 0, 0, 0, 0};
 
 #define WII_DECRYPT(data) (((data ^ 0x17) + 0x17) & 0xFF)
 
-#define BIT_2x8_16(dp1, dp2) ((dp1 << 8) | dp2) 
-#define PRINT_BB_GRID(grid, value) printf("===Grid %ikg===\nTR %i\nBR %i\nTL %i\nTR %i\n", value, grid.tr, grid.br, grid.tl, grid.tr)
+#define BIT_2x8_16(dp1, dp2) ((dp1 << 8) | dp2)
+#define PRINT_BB_GRID(grid, value) printf("===Grid %fkg===\nTR %f\nBR %f\nTL %f\nTR %f\n", value, grid.tr, grid.br, grid.tl, grid.tr)
 
 #define WIR_HALFRANGE 256.0
 #define WIR_INTERVAL  10.0
@@ -702,9 +702,9 @@ typedef enum {
 			balanceBoardCalibData.kg34.bl = BIT_2x8_16(dp[17], dp[18]);
 			/* Usage of last 4 values also unkown */
 			
-			PRINT_BB_GRID(balanceBoardCalibData.kg0, 0);
-			PRINT_BB_GRID(balanceBoardCalibData.kg17, 17);
-			PRINT_BB_GRID(balanceBoardCalibData.kg34, 34);
+			PRINT_BB_GRID(balanceBoardCalibData.kg0, (float)0);
+			PRINT_BB_GRID(balanceBoardCalibData.kg17, (float)17);
+			PRINT_BB_GRID(balanceBoardCalibData.kg34, (float)34);
 			
 			/* All data read, as 0x0020 data is presented to us already */ 
 			_shouldReadExpansionCalibration = NO;
@@ -778,7 +778,7 @@ typedef enum {
 	_isLED4Illuminated = (dp[4] & 0x80);
 } // handleStatusReport
 
-- (unsigned short) bbPressure2kg:(unsigned short) value pkg0:(unsigned short) pkg0 pkg17:(unsigned short) pkg17 pkg34:(unsigned short) pkg34
+- (float) bbPressure2kg:(float) value pkg0:(float) pkg0 pkg17:(float) pkg17 pkg34:(float) pkg34
 {
 	/* Convert to Kilograms
 	 * 0kg=0; value=20; 17kg=100

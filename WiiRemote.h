@@ -46,7 +46,7 @@ typedef struct {
 } WiiJoyStickCalibData;
 
 typedef struct {
-	unsigned short tr, br, tl, bl;
+	float tr, br, tl, bl;
 } WiiBalanceBoardGrid;
 
 typedef struct {
@@ -234,8 +234,8 @@ typedef enum {
 - (void) accelerationChanged:(WiiAccelerationSensorType) type accX:(unsigned short) accX accY:(unsigned short) accY accZ:(unsigned short) accZ;
 - (void) joyStickChanged:(WiiJoyStickType) type tiltX:(unsigned short) tiltX tiltY:(unsigned short) tiltY;
 - (void) analogButtonChanged:(WiiButtonType) type amount:(unsigned short) press;
-- (void) pressureChanged:(WiiPressureSensorType) type pressureTR:(unsigned short) bPressureTR pressureBR:(unsigned short) bPressureBR 
-			  pressureTL:(unsigned short) bPressureTL pressureBL:(unsigned short) bPressureBL;
+- (void) pressureChanged:(WiiPressureSensorType) type pressureTR:(float) bPressureTR pressureBR:(float) bPressureBR 
+			  pressureTL:(float) bPressureTL pressureBL:(float) bPressureBL;
 - (void) batteryLevelChanged:(double) level;
 - (void) wiiRemoteDisconnected:(IOBluetoothDevice*) device;
 - (void) gotMiiData: (Mii*) mii_data_buf at: (int) slot;
