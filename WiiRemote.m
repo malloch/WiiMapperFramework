@@ -7,6 +7,7 @@
 //
 
 #import "WiiRemote.h"
+#import <mapper/mapper.h>
 
 static WiiJoyStickCalibData kWiiNullJoystickCalibData = {0, 0, 0, 0, 0, 0};
 static WiiAccCalibData kWiiNullAccCalibData = {0, 0, 0, 0, 0, 0};
@@ -134,6 +135,31 @@ typedef enum {
 	return NO;
 }
 
+/*- (void) mapperHandleLEDS:(mapper_signal) sig:(void *) v
+{
+	unsigned char cmd[] = {0x11, 0x00};
+	if (_isVibrationEnabled)	cmd[1] |= 0x01;
+	
+	if (enabled1)	cmd[1] |= 0x10;
+	if (enabled2)	cmd[1] |= 0x20;
+	if (enabled3)	cmd[1] |= 0x40;
+	if (enabled4)	cmd[1] |= 0x80;
+	
+	_isLED1Illuminated = enabled1;
+	_isLED2Illuminated = enabled2;
+	_isLED3Illuminated = enabled3;
+	_isLED4Illuminated = enabled4;
+	
+	IOReturn ret = [self sendCommand:cmd length:2];
+	LogIOReturn (ret);
+}*/
+
+/*- (void) mapperHandleVibrate:(mapper_signal) sig:(void *) v
+{
+	_isVibrationEnabled = (*(BOOL*)v);
+	[self updateReportMode];
+}*/
+
 - (IOReturn) connectTo:(IOBluetoothDevice *) device
 { 
 	_wiiDevice = device; 
@@ -173,6 +199,43 @@ typedef enum {
 
 	
 	if ((ret == kIOReturnSuccess) && [self available]) {
+		dev_wiimote = mdev_new("wiimote", 9000, 0);
+		int mni = 190, mxi = 290;
+		float mnf = 0, mxf = 1;
+		if (dev_wiimote) {
+			//accelerometer
+			sig_accX = mdev_add_output(dev_wiimote, "/raw/accelerometer/x", 1, 'i', 0, &mni, &mxi);
+			sig_accY = mdev_add_output(dev_wiimote, "/raw/accelerometer/y", 1, 'i', 0, &mni, &mxi);
+			sig_accZ = mdev_add_output(dev_wiimote, "/raw/accelerometer/z", 1, 'i', 0, &mni, &mxi);
+			mni = 0;
+			mxi = 3;
+			sig_orientation = mdev_add_output(dev_wiimote, "/cooked/orientation", 1, 'i', 0, &mni, &mxi);
+			//buttons
+			mni = 0;
+			mxi = 1;
+			sig_upButton = mdev_add_output(dev_wiimote, "/raw/button/up", 1, 'i', 0, &mni, &mxi);
+			sig_downButton = mdev_add_output(dev_wiimote, "/raw/button/down", 1, 'i', 0, &mni, &mxi);
+			sig_leftButton = mdev_add_output(dev_wiimote, "/raw/button/left", 1, 'i', 0, &mni, &mxi);
+			sig_rightButton = mdev_add_output(dev_wiimote, "/raw/button/right", 1, 'i', 0, &mni, &mxi);
+			sig_aButton = mdev_add_output(dev_wiimote, "/raw/button/a", 1, 'i', 0, &mni, &mxi);
+			sig_bButton = mdev_add_output(dev_wiimote, "/raw/button/b", 1, 'i', 0, &mni, &mxi);
+			sig_plusButton = mdev_add_output(dev_wiimote, "/raw/button/plus", 1, 'i', 0, &mni, &mxi);
+			sig_minusButton = mdev_add_output(dev_wiimote, "/raw/button/minus", 1, 'i', 0, &mni, &mxi);
+			sig_homeButton = mdev_add_output(dev_wiimote, "/raw/button/home", 1, 'i', 0, &mni, &mxi);
+			sig_oneButton = mdev_add_output(dev_wiimote, "/raw/button/1", 1, 'i', 0, &mni, &mxi);
+			sig_twoButton = mdev_add_output(dev_wiimote, "/raw/button/2", 1, 'i', 0, &mni, &mxi);
+			//battery min and max values??
+			sig_battery = mdev_add_output(dev_wiimote, "/raw/battery", 1, 'f', 0, &mnf, &mxf);
+			//IR camera
+			//sig_leds
+			//sig_leds = mdev_add_input(dev_wiimote, "/leds", 4, 'i', 0, &mni, &mxi, (mapper_signal_handler *)[self mapperHandleLEDS], 0);
+			//sig_vibrate
+			//sig_vibrate = mdev_add_input(dev_wiimote, "/vibrate", 1, 'i', 0, &mni, &mxi, (mapper_signal_handler *)[self mapperHandleVibrate], 0);
+			while (!mdev_ready(dev_wiimote)) {
+				mdev_poll(dev_wiimote, 0);
+				usleep(50 * 1000);
+			}
+		}
 		disconnectNotification = [_wiiDevice registerForDisconnectNotification:self selector:@selector(disconnected:fromDevice:)];
 		_opened = YES;
 	} else {
@@ -496,6 +559,7 @@ typedef enum {
 
 - (IOReturn) closeConnection
 {
+	mdev_free(dev_wiimote);
 	IOReturn ret = 0;
 	_opened = NO;
 
@@ -724,6 +788,7 @@ typedef enum {
 
 	if (level != _batteryLevel) {
 		_batteryLevel = level;
+		msig_update_float(sig_battery, (float)level);
 		if ([_delegate respondsToSelector:@selector (batteryLevelChanged:)])
 			[_delegate batteryLevelChanged:_batteryLevel];
 	}
@@ -1081,6 +1146,17 @@ typedef enum {
 			if (absx > WIR_INTERVAL)
 				orientation = (_lowX > WIR_HALFRANGE) ? 3 : 1;
 		}
+		
+		if (dev_wiimote) {
+			mdev_poll(dev_wiimote, 0);
+			msig_update_int(sig_accX, (int)accX);
+			msig_update_int(sig_accY, (int)accY);
+			msig_update_int(sig_accZ, (int)accZ);
+			msig_update_int(sig_orientation, orientation);
+			//check diff on button state
+			//send button diffs
+			//or send them all the time?
+		}
 	} // report contains motion sensor data
 } // handleButtonReport
 
@@ -1088,11 +1164,13 @@ typedef enum {
 	if (data & kWiiRemoteTwoButton){
 		if (!buttonState[WiiRemoteTwoButton]){
 			buttonState[WiiRemoteTwoButton] = YES;
+			msig_update_int(sig_twoButton, 1);
 			[_delegate buttonChanged:WiiRemoteTwoButton isPressed:buttonState[WiiRemoteTwoButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteTwoButton]){
 			buttonState[WiiRemoteTwoButton] = NO;
+			msig_update_int(sig_twoButton, 0);
 			[_delegate buttonChanged:WiiRemoteTwoButton isPressed:buttonState[WiiRemoteTwoButton]];
 		}
 	}
@@ -1100,11 +1178,13 @@ typedef enum {
 	if (data & kWiiRemoteOneButton){
 		if (!buttonState[WiiRemoteOneButton]){
 			buttonState[WiiRemoteOneButton] = YES;
+			msig_update_int(sig_oneButton, 1);
 			[_delegate buttonChanged:WiiRemoteOneButton isPressed:buttonState[WiiRemoteOneButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteOneButton]){
 			buttonState[WiiRemoteOneButton] = NO;
+			msig_update_int(sig_oneButton, 0);
 			[_delegate buttonChanged:WiiRemoteOneButton isPressed:buttonState[WiiRemoteOneButton]];
 		}
 	}
@@ -1112,11 +1192,13 @@ typedef enum {
 	if (data & kWiiRemoteAButton){
 		if (!buttonState[WiiRemoteAButton]){
 			buttonState[WiiRemoteAButton] = YES;
+			msig_update_int(sig_aButton, 1);
 			[_delegate buttonChanged:WiiRemoteAButton isPressed:buttonState[WiiRemoteAButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteAButton]){
 			buttonState[WiiRemoteAButton] = NO;
+			msig_update_int(sig_aButton, 0);
 			[_delegate buttonChanged:WiiRemoteAButton isPressed:buttonState[WiiRemoteAButton]];
 		}
 	}
@@ -1124,11 +1206,13 @@ typedef enum {
 	if (data & kWiiRemoteBButton){
 		if (!buttonState[WiiRemoteBButton]){
 			buttonState[WiiRemoteBButton] = YES;
+			msig_update_int(sig_bButton, 1);
 			[_delegate buttonChanged:WiiRemoteBButton isPressed:buttonState[WiiRemoteBButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteBButton]){
 			buttonState[WiiRemoteBButton] = NO;
+			msig_update_int(sig_bButton, 0);
 			[_delegate buttonChanged:WiiRemoteBButton isPressed:buttonState[WiiRemoteBButton]];
 		}
 	}
@@ -1136,11 +1220,13 @@ typedef enum {
 	if (data & kWiiRemoteMinusButton){
 		if (!buttonState[WiiRemoteMinusButton]){
 			buttonState[WiiRemoteMinusButton] = YES;
+			msig_update_int(sig_minusButton, 1);
 			[_delegate buttonChanged:WiiRemoteMinusButton isPressed:buttonState[WiiRemoteMinusButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteMinusButton]){
 			buttonState[WiiRemoteMinusButton] = NO;
+			msig_update_int(sig_minusButton, 0);
 			[_delegate buttonChanged:WiiRemoteMinusButton isPressed:buttonState[WiiRemoteMinusButton]];
 		}
 	}
@@ -1148,11 +1234,13 @@ typedef enum {
 	if (data & kWiiRemoteHomeButton){
 		if (!buttonState[WiiRemoteHomeButton]){
 			buttonState[WiiRemoteHomeButton] = YES;
+			msig_update_int(sig_homeButton, 1);
 			[_delegate buttonChanged:WiiRemoteHomeButton isPressed:buttonState[WiiRemoteHomeButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteHomeButton]){
 			buttonState[WiiRemoteHomeButton] = NO;
+			msig_update_int(sig_homeButton, 0);
 			[_delegate buttonChanged:WiiRemoteHomeButton isPressed:buttonState[WiiRemoteHomeButton]];
 		}
 	}
@@ -1160,11 +1248,13 @@ typedef enum {
 	if (data & kWiiRemotePlusButton){
 		if (!buttonState[WiiRemotePlusButton]){
 			buttonState[WiiRemotePlusButton] = YES;
+			msig_update_int(sig_plusButton, 1);
 			[_delegate buttonChanged:WiiRemotePlusButton isPressed:buttonState[WiiRemotePlusButton]];
 		}
 	}else{
 		if (buttonState[WiiRemotePlusButton]){
 			buttonState[WiiRemotePlusButton] = NO;
+			msig_update_int(sig_plusButton, 0);
 			[_delegate buttonChanged:WiiRemotePlusButton isPressed:buttonState[WiiRemotePlusButton]];
 		}
 	}
@@ -1172,11 +1262,13 @@ typedef enum {
 	if (data & kWiiRemoteUpButton){
 		if (!buttonState[WiiRemoteUpButton]){
 			buttonState[WiiRemoteUpButton] = YES;
+			msig_update_int(sig_upButton, 1);
 			[_delegate buttonChanged:WiiRemoteUpButton isPressed:buttonState[WiiRemoteUpButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteUpButton]){
 			buttonState[WiiRemoteUpButton] = NO;
+			msig_update_int(sig_upButton, 0);
 			[_delegate buttonChanged:WiiRemoteUpButton isPressed:buttonState[WiiRemoteUpButton]];
 		}
 	}
@@ -1184,11 +1276,13 @@ typedef enum {
 	if (data & kWiiRemoteDownButton){
 		if (!buttonState[WiiRemoteDownButton]){
 			buttonState[WiiRemoteDownButton] = YES;
+			msig_update_int(sig_downButton, 1);
 			[_delegate buttonChanged:WiiRemoteDownButton isPressed:buttonState[WiiRemoteDownButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteDownButton]){
 			buttonState[WiiRemoteDownButton] = NO;
+			msig_update_int(sig_downButton, 0);
 			[_delegate buttonChanged:WiiRemoteDownButton isPressed:buttonState[WiiRemoteDownButton]];
 		}
 	}
@@ -1196,11 +1290,13 @@ typedef enum {
 	if (data & kWiiRemoteLeftButton){
 		if (!buttonState[WiiRemoteLeftButton]){
 			buttonState[WiiRemoteLeftButton] = YES;
+			msig_update_int(sig_leftButton, 1);
 			[_delegate buttonChanged:WiiRemoteLeftButton isPressed:buttonState[WiiRemoteLeftButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteLeftButton]){
 			buttonState[WiiRemoteLeftButton] = NO;
+			msig_update_int(sig_leftButton, 0);
 			[_delegate buttonChanged:WiiRemoteLeftButton isPressed:buttonState[WiiRemoteLeftButton]];
 		}
 	}
@@ -1209,11 +1305,13 @@ typedef enum {
 	if (data & kWiiRemoteRightButton){
 		if (!buttonState[WiiRemoteRightButton]){
 			buttonState[WiiRemoteRightButton] = YES;
+			msig_update_int(sig_rightButton, 1);
 			[_delegate buttonChanged:WiiRemoteRightButton isPressed:buttonState[WiiRemoteRightButton]];
 		}
 	}else{
 		if (buttonState[WiiRemoteRightButton]){
 			buttonState[WiiRemoteRightButton] = NO;
+			msig_update_int(sig_rightButton, 0);
 			[_delegate buttonChanged:WiiRemoteRightButton isPressed:buttonState[WiiRemoteRightButton]];
 		}
 	}
@@ -1469,6 +1567,9 @@ typedef enum {
 - (IOReturn) getCurrentStatus:(NSTimer*) timer
 {
 	unsigned char cmd[] = {0x15, 0x00};
+	if (dev_wiimote) {
+		mdev_poll(dev_wiimote, 0);
+	}
 	IOReturn ret = [self sendCommand:cmd length:2];
 	if (ret != kIOReturnSuccess)
 		NSLogDebug (@"getCurrentStatus: failed.");

@@ -11,6 +11,7 @@
 #import <Cocoa/Cocoa.h>
 #import <IOBluetooth/objc/IOBluetoothDevice.h>
 #import <IOBluetooth/objc/IOBluetoothL2CAPChannel.h>
+#import <mapper/mapper.h>
 
 // useful logging macros
 #ifndef NSLogDebug
@@ -158,10 +159,29 @@ typedef enum {
 	BOOL buttonState[28];
 	
 	//wiimote
+	mapper_device dev_wiimote;
 	unsigned short accX;
 	unsigned short accY;
 	unsigned short accZ;
-	unsigned short buttonData;	
+	unsigned short buttonData;
+	mapper_signal sig_accX;
+	mapper_signal sig_accY;
+	mapper_signal sig_accZ;
+	mapper_signal sig_orientation;
+	mapper_signal sig_upButton;
+	mapper_signal sig_downButton;
+	mapper_signal sig_leftButton;
+	mapper_signal sig_rightButton;
+	mapper_signal sig_aButton;
+	mapper_signal sig_bButton;
+	mapper_signal sig_plusButton;
+	mapper_signal sig_minusButton;
+	mapper_signal sig_homeButton;
+	mapper_signal sig_oneButton;
+	mapper_signal sig_twoButton;
+	mapper_signal sig_battery;
+	mapper_signal sig_leds;
+	mapper_signal sig_vibrate;
 	
 	//nunchuk
 	unsigned short nStickX;
@@ -221,6 +241,9 @@ typedef enum {
 - (void) sendWiiNunchukButtonEvent:(UInt16) data;
 - (void) sendWiiClassicControllerButtonEvent:(UInt16) data;
 
+//- (void) mapperHandleLEDS:(mapper_signal) sig:(void *) v;
+//- (void) mapperHandleVibrate:(mapper_signal) sig:(void *) v;
+
 @end
 
 @interface NSObject (WiiRemoteDelegate)
@@ -241,4 +264,5 @@ typedef enum {
 - (void) gotMiiData: (Mii*) mii_data_buf at: (int) slot;
 - (void) rawPressureChanged:(WiiBalanceBoardGrid) bbData;
 - (void) allPressureChanged:(WiiPressureSensorType) type bbData:(WiiBalanceBoardGrid) bbData bbDataInKg:(WiiBalanceBoardGrid) bbDataInKg;
+
 @end
