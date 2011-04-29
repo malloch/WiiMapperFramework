@@ -135,30 +135,32 @@ typedef enum {
 	return NO;
 }
 
-/*- (void) mapperHandleLEDS:(mapper_signal) sig:(void *) v
+void mapperHandleLEDS(mapper_signal sig, void *value)
 {
-	unsigned char cmd[] = {0x11, 0x00};
-	if (_isVibrationEnabled)	cmd[1] |= 0x01;
-	
-	if (enabled1)	cmd[1] |= 0x10;
-	if (enabled2)	cmd[1] |= 0x20;
-	if (enabled3)	cmd[1] |= 0x40;
-	if (enabled4)	cmd[1] |= 0x80;
-	
-	_isLED1Illuminated = enabled1;
-	_isLED2Illuminated = enabled2;
-	_isLED3Illuminated = enabled3;
-	_isLED4Illuminated = enabled4;
-	
-	IOReturn ret = [self sendCommand:cmd length:2];
-	LogIOReturn (ret);
-}*/
+    if (value) {
+        mapper_db_signal props = msig_properties(sig);
+        id self = props->user_data;
+        int i = *(int *)value;
+        
+        [self setLEDEnabled1:i&0x01 enabled2:i&0x02 enabled3:i&0x04 enabled4:i&0x08];
+        [self updateReportMode];
+    }
+}
 
-/*- (void) mapperHandleVibrate:(mapper_signal) sig:(void *) v
+void mapperHandleVibrate(mapper_signal sig, void *value)
 {
-	_isVibrationEnabled = (*(BOOL*)v);
-	[self updateReportMode];
-}*/
+    if (value) {
+        mapper_db_signal props = msig_properties(sig);
+        id self = props->user_data;
+        int *i = value;
+        if (*i >= 1)
+            *i = 1;
+        else
+            *i = 0;
+        [self setForceFeedbackEnabled:(BOOL) *i];
+        [self updateReportMode];
+    }
+}
 
 - (IOReturn) connectTo:(IOBluetoothDevice *) device
 { 
@@ -211,7 +213,6 @@ typedef enum {
 			mxi = 3;
 			sig_orientation = mdev_add_output(dev_wiimote, "/cooked/orientation", 1, 'i', 0, &mni, &mxi);
 			//buttons
-			mni = 0;
 			mxi = 1;
 			sig_upButton = mdev_add_output(dev_wiimote, "/raw/button/up", 1, 'i', 0, &mni, &mxi);
 			sig_downButton = mdev_add_output(dev_wiimote, "/raw/button/down", 1, 'i', 0, &mni, &mxi);
@@ -227,10 +228,11 @@ typedef enum {
 			//battery min and max values??
 			sig_battery = mdev_add_output(dev_wiimote, "/raw/battery", 1, 'f', 0, &mnf, &mxf);
 			//IR camera
-			//sig_leds
-			//sig_leds = mdev_add_input(dev_wiimote, "/leds", 4, 'i', 0, &mni, &mxi, (mapper_signal_handler *)[self mapperHandleLEDS], 0);
 			//sig_vibrate
-			//sig_vibrate = mdev_add_input(dev_wiimote, "/vibrate", 1, 'i', 0, &mni, &mxi, (mapper_signal_handler *)[self mapperHandleVibrate], 0);
+			sig_vibrate = mdev_add_input(dev_wiimote, "/vibrate", 1, 'i', 0, &mni, &mxi, mapperHandleVibrate, self);
+            mxi = 15;
+            //sig_leds
+			sig_leds = mdev_add_input(dev_wiimote, "/leds", 1, 'i', 0, &mni, &mxi, mapperHandleLEDS, self);
 			while (!mdev_ready(dev_wiimote)) {
 				mdev_poll(dev_wiimote, 0);
 				usleep(50 * 1000);

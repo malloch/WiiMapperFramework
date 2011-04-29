@@ -26,7 +26,6 @@
 
 extern NSString * WiiRemoteExpansionPortChangedNotification;
 
-
 typedef unsigned char WiiIRModeType;
 enum {
 	kWiiIRModeBasic			= 0x01,
@@ -241,8 +240,8 @@ typedef enum {
 - (void) sendWiiNunchukButtonEvent:(UInt16) data;
 - (void) sendWiiClassicControllerButtonEvent:(UInt16) data;
 
-//- (void) mapperHandleLEDS:(mapper_signal) sig:(void *) v;
-//- (void) mapperHandleVibrate:(mapper_signal) sig:(void *) v;
+void mapperHandleLEDS(mapper_signal sig, void *value);
+void mapperHandleVibrate(mapper_signal sig, void *value);
 
 @end
 
