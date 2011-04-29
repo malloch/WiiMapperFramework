@@ -181,6 +181,7 @@ typedef enum {
 	mapper_signal sig_battery;
 	mapper_signal sig_leds;
 	mapper_signal sig_vibrate;
+    mapper_signal sig_ir[4];
 	
 	//nunchuk
 	unsigned short nStickX;

@@ -141,7 +141,6 @@ void mapperHandleLEDS(mapper_signal sig, void *value)
         mapper_db_signal props = msig_properties(sig);
         id self = props->user_data;
         int i = *(int *)value;
-        
         [self setLEDEnabled1:i&0x01 enabled2:i&0x02 enabled3:i&0x04 enabled4:i&0x08];
         [self updateReportMode];
     }
@@ -202,7 +201,7 @@ void mapperHandleVibrate(mapper_signal sig, void *value)
 	
 	if ((ret == kIOReturnSuccess) && [self available]) {
 		dev_wiimote = mdev_new("wiimote", 9000, 0);
-		int mni = 190, mxi = 290;
+		int i, mni = 190, mxi = 290;
 		float mnf = 0, mxf = 1;
 		if (dev_wiimote) {
 			//accelerometer
@@ -228,6 +227,11 @@ void mapperHandleVibrate(mapper_signal sig, void *value)
 			//battery min and max values??
 			sig_battery = mdev_add_output(dev_wiimote, "/raw/battery", 1, 'f', 0, &mnf, &mxf);
 			//IR camera
+            for (i=0; i<4; i++) {
+                char sig_name[128];
+                snprintf(sig_name, 128, "%s%i", "/ir/blob.", i);
+                sig_ir[i] = mdev_add_output(dev_wiimote, sig_name, 3, 'i', 0, &mni, &mxi);
+            }
 			//sig_vibrate
 			sig_vibrate = mdev_add_input(dev_wiimote, "/vibrate", 1, 'i', 0, &mni, &mxi, mapperHandleVibrate, self);
             mxi = 15;
@@ -982,7 +986,7 @@ void mapperHandleVibrate(mapper_signal sig, void *value)
 	
 	/* Set all IR data to array, based on input format */
 //	NSLog(@"Handling IR Data for 0x%00x", dp[1]);	
-	int i = 0;
+	int i = 0, payload[3];
 	if (dp[1] == 0x33) { // 12 IR bytes
 		int startByte = 0;
 		for(i=0 ; i < 4 ; i++) { 
@@ -990,6 +994,10 @@ void mapperHandleVibrate(mapper_signal sig, void *value)
 			irData[i].x = (dp[startByte +0] | ((dp[startByte +2] & 0x30) << 4)) & 0x3FF;
 			irData[i].y = (dp[startByte +1] | ((dp[startByte +2] & 0xC0) << 2)) & 0x3FF;
 			irData[i].s =  dp[startByte +2] & 0x0F;
+            payload[0] = irData[i].x;
+            payload[1] = irData[i].y;
+            payload[2] = irData[i].s;
+            msig_update(sig_ir[i], payload);
 		} 	
  	} else { // 10 IR bytes
 		int shift = (dp[1] == 0x36) ? 4 : 7;
@@ -1000,10 +1008,18 @@ void mapperHandleVibrate(mapper_signal sig, void *value)
 			irData[2*i].x = (dp[startByte +0] | ((dp[startByte +2] & 0x30) << 4)) & 0x3FF;
 			irData[2*i].y = (dp[startByte +1] | ((dp[startByte +2] & 0xC0) << 2)) & 0x3FF;
 			irData[2*i].s = ((irData[2*i].x == irData[2*i].y) && (irData[2*i].x == 0x3FF)) ? 0x0F : 0x05;  // No size is given in 10 byte report.
+            payload[0] = irData[2*i].x;
+            payload[1] = irData[2*i].y;
+            payload[2] = irData[2*i].s;
+            msig_update(sig_ir[2*i], payload);
 
 			irData[(2*i)+1].x = (dp[startByte +3] | ((dp[startByte +2] & 0x03) << 8)) & 0x3FF;
 			irData[(2*i)+1].y = (dp[startByte +4] | ((dp[startByte +2] & 0x0C) << 6)) & 0x3FF;
 			irData[(2*i)+1].s = ((irData[(2*i)+1].x == irData[(2*i)+1].y) && (irData[(2*i)+1].x == 0x3FF)) ? 0x0F : 0x05;  // No size is given in 10 byte report.
+            payload[0] = irData[(2*i)+1].x;
+            payload[1] = irData[(2*i)+1].y;
+            payload[2] = irData[(2*i)+1].s;
+            msig_update(sig_ir[(2*i)+1], payload);
 		}
 	}
 
